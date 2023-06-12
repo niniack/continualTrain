@@ -1,0 +1,9 @@
+name: local_env
+channels:
+dependencies:
+   - conda-forge::transformers
+   - conda-forge::timm
+   - conda-forge::torchinfo
+   - conda-forge::gputil
+   - pip:
+     - avalanche-lib
