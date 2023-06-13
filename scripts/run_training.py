@@ -47,7 +47,7 @@ def main():
     args = parse_args()
 
     # CONFIGURATION
-    config, kwarg_dict = parse_config(Path(f"/config/{args.config_file}"))
+    config, kwarg_dict = parse_config(Path(f"{args.config_file}"))
     try:
         deviceID = GPUtil.getFirstAvailable(
             order="load",
@@ -89,8 +89,13 @@ def main():
     # TRAINING
     for model_seed in config.model_seeds:
         # # Model
-        ModelClass = import_module_from_file(Path(f"/model/{args.model_file}"))
-        model = ModelClass(num_classes=100, device=device, seed=model_seed)
+        ModelClass = import_module_from_file(Path(f"{args.model_file}"))
+        model = ModelClass(
+            num_classes=100,
+            device=device,
+            seed=model_seed,
+            multihead=config.use_multihead,
+        )
 
         # Training configuration
         momentum = getattr(config, "momentum", 0.9)

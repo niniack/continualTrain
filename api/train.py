@@ -25,20 +25,23 @@ def parse_args():
 
 
 def build_docker_image():
-    command = ["docker", "build", "-t", image_name, "./docker"]
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    parent_dir = os.path.dirname(script_dir)
+    docker_dir = os.path.join(parent_dir, "docker")
+    command = ["docker", "build", "-t", "continual_train", docker_dir]
     subprocess.run(command, check=True)
 
 
 # fmt: off
 def docker_run_training(args):
+    # Resolve paths to absolute paths
+    model_path = Path(args.model_file).resolve().parent
+    model_file = Path(args.model_file).resolve().name
 
-    model_path = Path(args.model_file).parent
-    model_file = Path(args.model_file).name
+    config_path = Path(args.config).resolve().parent
+    config_file = Path(args.config).resolve().name
 
-    config_path = Path(args.config).parent
-    config_file = Path(args.config).name
-
-    print(config_path)
+    project_directory = Path(__file__).resolve().parent.parent
 
     command = [
         "docker", "run", "-it", "--rm",
@@ -46,7 +49,8 @@ def docker_run_training(args):
         "--ipc=host",
         "--ulimit", "memlock=-1",
         "--ulimit", "stack=67108864",
-        "-v", f"{os.getcwd()}:/workspace",
+        "--env-file", f"{project_directory}/.env",
+        "-v", f"{project_directory}:/workspace",
         "-v", f"{os.getenv('HOME')}/.ssh:/root/.ssh",
         "-v", f"{model_path}:/model",
         "-v", f"{config_path}:/config",
@@ -56,8 +60,8 @@ def docker_run_training(args):
         image_name, "/bin/bash", "-c",
         f"cd /workspace && pip install -e . && \
           python /workspace/scripts/run_training.py \
-        --config_file {config_file} \
-        --model_file {model_file}"
+        --config_file /config/{config_file} \
+        --model_file /model/{model_file}"
     ]
     
     subprocess.run(command, check=True)

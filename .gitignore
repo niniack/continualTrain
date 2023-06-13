@@ -4,3 +4,4 @@ wandb
 .vscode
 saved
 __pycache__
+*.env
