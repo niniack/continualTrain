@@ -1,5 +1,6 @@
 from pathlib import Path
 import argparse
+import json
 
 import GPUtil
 import torch
@@ -38,6 +39,12 @@ def parse_args():
         required=True,
         help="Path to Python file defining model",
     )
+    parser.add_argument(
+        "--save_path",
+        type=str,
+        required=True,
+        help="Path to save models",
+    )
     args = parser.parse_args()
     return args
 
@@ -64,9 +71,15 @@ def main():
     interactive_logger = InteractiveLogger()
     loggers = [interactive_logger]
     if config.use_wandb:
-        wandb_params = {"entity": config.wandb_entity}
+        # Get config dict to save on wandb
+        with open(args.config_file, "r") as f:
+            config_dict = json.load(f)
+
+        # Run name
+        run_name = f"{config.strategy.name}_{config.dataset_name.name}"
+        wandb_params = {"entity": config.wandb_entity, "name": run_name}
         wandb_logger = WandBLogger(
-            project_name=config.wandb_project, params=wandb_params
+            project_name=config.wandb_project, params=wandb_params, config=config_dict
         )
         loggers.append(wandb_logger)
 
@@ -119,7 +132,7 @@ def main():
         if config.strategy == Strategy.JOINT:
             cl_strategy.train(train_stream)
             results.append(cl_strategy.eval(test_stream))
-            model.save_weights(f"saved/{config.strategy}/experience_0")
+            model.save_weights(f"{args.save_path}/{config.strategy}/experience_0")
         else:
             for i, experience in enumerate(train_stream):
                 print("Start of experience: ", experience.current_experience)
@@ -130,7 +143,7 @@ def main():
 
                 print("Computing accuracy on the whole test set")
                 results.append(cl_strategy.eval(test_stream))
-            model.save_weights(f"saved/{config.strategy}/experience_{i}")
+                model.save_weights(f"{args.save_path}/{config.strategy}/experience_{i}")
 
 
 if __name__ == "__main__":

@@ -25,3 +25,11 @@ For strategy/plugin specific arguments:
 https://avalanche-api.continualai.org/en/v0.3.1/training.html#training-plugins
 
 All model classes submitted must have a "save_weight" method which takes in a relative path for save location
+
+Set up a .env file
+
+```env
+# This is secret and shouldn't be checked into version control
+WANDB_API_KEY=$SECRETY_KEY
+WANDB_DISABLE_GIT="true" #annoying when false
+```

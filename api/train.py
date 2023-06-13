@@ -19,7 +19,12 @@ def parse_args():
         help="Path to Python file defining model",
         required=True,
     )
-
+    parser.add_argument(
+        "--save_path",
+        type=str,
+        required=True,
+        help="Path to save models",
+    )
     args = parser.parse_args()
     return args
 
@@ -41,6 +46,8 @@ def docker_run_training(args):
     config_path = Path(args.config).resolve().parent
     config_file = Path(args.config).resolve().name
 
+    save_path = Path(args.save_path).resolve()
+    
     project_directory = Path(__file__).resolve().parent.parent
 
     command = [
@@ -54,6 +61,7 @@ def docker_run_training(args):
         "-v", f"{os.getenv('HOME')}/.ssh:/root/.ssh",
         "-v", f"{model_path}:/model",
         "-v", f"{config_path}:/config",
+        "-v", f"{save_path}:/save",
         "-v", "/mnt:/mnt",
         # "-v", f"{os.getenv('HOME')}/.avalanche:/root/.avalanche",
         # "-v", "/home/alodie/datasets:/root/datasets",
@@ -61,7 +69,8 @@ def docker_run_training(args):
         f"cd /workspace && pip install -e . && \
           python /workspace/scripts/run_training.py \
         --config_file /config/{config_file} \
-        --model_file /model/{model_file}"
+        --model_file /model/{model_file} \
+        --save_path /save"
     ]
     
     subprocess.run(command, check=True)

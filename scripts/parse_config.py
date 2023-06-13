@@ -21,8 +21,7 @@ required_keys = [
     "use_wandb",
     "wandb_project",
     "wandb_entity",
-    "use_multihead"
-    # "model_path",
+    "use_multihead",
 ]
 
 
