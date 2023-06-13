@@ -1,6 +1,7 @@
 from pathlib import Path
 import argparse
 import json
+import shortuuid
 
 import GPUtil
 import torch
@@ -50,6 +51,8 @@ def parse_args():
 
 
 def main():
+    rand_uuid = str(shortuuid.uuid())
+
     # ARGS
     args = parse_args()
 
@@ -76,7 +79,7 @@ def main():
             config_dict = json.load(f)
 
         # Run name
-        run_name = f"{config.strategy.name}_{config.dataset_name.name}"
+        run_name = f"{rand_uuid}_{config.strategy.name}_{config.dataset_name.name}"
         wandb_params = {"entity": config.wandb_entity, "name": run_name}
         wandb_logger = WandBLogger(
             project_name=config.wandb_project, params=wandb_params, config=config_dict
@@ -132,7 +135,9 @@ def main():
         if config.strategy == Strategy.JOINT:
             cl_strategy.train(train_stream)
             results.append(cl_strategy.eval(test_stream))
-            model.save_weights(f"{args.save_path}/{config.strategy}/experience_0")
+            model.save_weights(
+                f"{args.save_path}/{config.strategy}/{rand_uuid}/experience_0"
+            )
         else:
             for i, experience in enumerate(train_stream):
                 print("Start of experience: ", experience.current_experience)
@@ -143,7 +148,9 @@ def main():
 
                 print("Computing accuracy on the whole test set")
                 results.append(cl_strategy.eval(test_stream))
-                model.save_weights(f"{args.save_path}/{config.strategy}/experience_{i}")
+                model.save_weights(
+                    f"{args.save_path}/{config.strategy}/{rand_uuid}/experience_0"
+                )
 
 
 if __name__ == "__main__":

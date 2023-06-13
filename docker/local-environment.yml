@@ -7,3 +7,4 @@ dependencies:
    - conda-forge::gputil
    - pip:
      - avalanche-lib
+     - shortuuid
