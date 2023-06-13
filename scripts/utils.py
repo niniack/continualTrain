@@ -5,7 +5,7 @@ import importlib.util
 
 from avalanche.benchmarks.classic import SplitCIFAR100
 from avalanche.training.supervised import Naive, JointTraining, Cumulative
-from avalanche.training.plugins import EWCPlugin, MASPlugin, ReplayPlugin
+from avalanche.training.plugins import EWCPlugin, MASPlugin, ReplayPlugin, RWalkPlugin
 
 DS_SEED = 42
 
@@ -49,6 +49,7 @@ class Strategy(Enum):
     EWC = "ewc"
     REPLAY = "replay"
     MAS = "mas"
+    RWALK = "rwalk"
 
 
 class Dataset(Enum):
@@ -105,8 +106,19 @@ def build_strategy(
         )
     else:
         plugins = []
+
         if strategy == Strategy.EWC:
             plugins.append(EWCPlugin(ewc_lambda=kwarg_dict.ewc_lambda))
+
+        elif strategy == Strategy.RWALK:
+            plugins.append(
+                RWalkPlugin(
+                    ewc_lambda=kwarg_dict.rwalk_lambda,
+                    ewc_alpha=kwarg_dict.rwalk_alpha,
+                    delta_t=kwarg_dict.rwalk_delta_t,
+                )
+            )
+
         elif strategy == Strategy.MAS:
             plugins.append(
                 MASPlugin(lambda_reg=kwarg_dict.mas_lambda, alpha=kwarg_dict.mas_alpha)
