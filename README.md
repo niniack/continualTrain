@@ -1,3 +1,4 @@
+#### Base JSON
 Ensure that any config JSON has at least the following fields:
 
 ```
@@ -22,13 +23,19 @@ Ensure that any config JSON has at least the following fields:
     "model_seeds": [0,1]
 }
 ```
-
+#### Other JSON Keys
 For strategy/plugin specific arguments:
 https://avalanche-api.continualai.org/en/v0.3.1/training.html#training-plugins
 
-All model classes submitted must have a "save_weight" method which takes in a relative path for save location
+EWC: `ewc_lambda`
+RWALK: `rwalk_lambda, rwalk_alpha, rwalk_delta_t`
+MAS: `mas_lambda, mas_alpha`
+REPLAY: `replay_mem_size`
 
-Set up a .env file
+#### Other
+- All model classes submitted must have a "save_weight" method which takes in a relative path for save location
+
+- Set up a .env file
 
 ```env
 # This is secret and shouldn't be checked into version control
