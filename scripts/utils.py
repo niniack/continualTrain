@@ -6,6 +6,7 @@ import importlib.util
 from avalanche.benchmarks.classic import SplitCIFAR100
 from avalanche.training.supervised import Naive, JointTraining, Cumulative
 from avalanche.training.plugins import EWCPlugin, MASPlugin, ReplayPlugin, RWalkPlugin
+from avalanche.training.storage_policy import ClassBalancedBuffer
 
 DS_SEED = 42
 
@@ -108,23 +109,35 @@ def build_strategy(
         plugins = []
 
         if strategy == Strategy.EWC:
-            plugins.append(EWCPlugin(ewc_lambda=kwarg_dict.ewc_lambda))
+            plugins.append(EWCPlugin(ewc_lambda=kwarg_dict["ewc_lambda"]))
 
         elif strategy == Strategy.RWALK:
             plugins.append(
                 RWalkPlugin(
-                    ewc_lambda=kwarg_dict.rwalk_lambda,
-                    ewc_alpha=kwarg_dict.rwalk_alpha,
-                    delta_t=kwarg_dict.rwalk_delta_t,
+                    ewc_lambda=kwarg_dict["rwalk_lambda"],
+                    ewc_alpha=kwarg_dict["rwalk_alpha"],
+                    delta_t=kwarg_dict["rwalk_delta_t"],
                 )
             )
 
         elif strategy == Strategy.MAS:
             plugins.append(
-                MASPlugin(lambda_reg=kwarg_dict.mas_lambda, alpha=kwarg_dict.mas_alpha)
+                MASPlugin(
+                    lambda_reg=kwarg_dict["mas_lambda"], alpha=kwarg_dict["mas_alpha"]
+                )
             )
         elif strategy == Strategy.REPLAY:
-            plugins.append(ReplayPlugin(mem_size=kwarg_dict.replay_mem_size))
+            storage_policy = ClassBalancedBuffer(
+                max_size=kwarg_dict["replay_mem_size"],
+                adaptive_size=False,
+                total_num_classes=100,
+            )
+            plugins.append(
+                ReplayPlugin(
+                    mem_size=kwarg_dict["replay_mem_size"],
+                    storage_policy=storage_policy,
+                )
+            )
 
         cl_strategy = Naive(
             model,

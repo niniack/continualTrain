@@ -12,8 +12,6 @@ import avalanche
 from avalanche.logging import InteractiveLogger, WandBLogger
 from avalanche.training.plugins import EvaluationPlugin
 from avalanche.evaluation.metrics import accuracy_metrics
-from avalanche.training.supervised import Naive, Cumulative, EWC, MAS
-from avalanche.training.plugins import ReplayPlugin
 
 from scripts.parse_config import parse_config
 from scripts.utils import (
