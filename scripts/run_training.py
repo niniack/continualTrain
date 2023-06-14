@@ -51,7 +51,7 @@ def parse_args():
 
 
 def main():
-    rand_uuid = str(shortuuid.uuid())
+    rand_uuid = str(shortuuid.uuid())[:4]
 
     # ARGS
     args = parse_args()
@@ -60,42 +60,18 @@ def main():
     config, kwarg_dict = parse_config(Path(f"{args.config_file}"))
     try:
         deviceID = GPUtil.getFirstAvailable(
-            order="load",
-            maxLoad=0,
-            maxMemory=0,
+            order="memory",
+            maxLoad=0.85,
+            maxMemory=0.85,
             attempts=1,
             interval=15,
             verbose=False,
         )
     except:
         deviceID = None
-    device = torch.device(f"cuda:{deviceID[0]}" if deviceID else "cpu")
 
+    device = torch.device(f"cuda:{deviceID[0]}" if deviceID is not None else "cpu")
     interactive_logger = InteractiveLogger()
-    loggers = [interactive_logger]
-    if config.use_wandb:
-        # Get config dict to save on wandb
-        with open(args.config_file, "r") as f:
-            config_dict = json.load(f)
-
-        # Run name
-        run_name = f"{rand_uuid}_{config.strategy.name}_{config.dataset_name.name}"
-        wandb_params = {"entity": config.wandb_entity, "name": run_name}
-        wandb_logger = WandBLogger(
-            project_name=config.wandb_project, params=wandb_params, config=config_dict
-        )
-        loggers.append(wandb_logger)
-
-    eval_plugin = EvaluationPlugin(
-        accuracy_metrics(
-            minibatch=False,
-            epoch=True,
-            epoch_running=False,
-            experience=True,
-            stream=False,
-        ),
-        loggers=loggers,
-    )
 
     # Benchmark with 10 experiences
     dataset = build_dataset(config, kwarg_dict)
@@ -104,7 +80,35 @@ def main():
 
     # TRAINING
     for model_seed in config.model_seeds:
-        # # Model
+        # Set up logging
+        loggers = [interactive_logger]
+        if config.use_wandb:
+            # Get config dict to save on wandb
+            with open(args.config_file, "r") as f:
+                config_dict = json.load(f)
+
+            # Run name
+            run_name = f"{rand_uuid}_seed{model_seed}_{config.strategy.name}_{config.dataset_name.name}"
+            wandb_params = {"entity": config.wandb_entity, "name": run_name}
+            wandb_logger = WandBLogger(
+                project_name=config.wandb_project,
+                params=wandb_params,
+                config=config_dict,
+            )
+            loggers.append(wandb_logger)
+
+        eval_plugin = EvaluationPlugin(
+            accuracy_metrics(
+                minibatch=False,
+                epoch=True,
+                epoch_running=False,
+                experience=True,
+                stream=False,
+            ),
+            loggers=loggers,
+        )
+
+        # Model
         ModelClass = import_module_from_file(Path(f"{args.model_file}"))
         model = ModelClass(
             num_classes=100,
@@ -149,8 +153,11 @@ def main():
                 print("Computing accuracy on the whole test set")
                 results.append(cl_strategy.eval(test_stream))
                 model.save_weights(
-                    f"{args.save_path}/{config.strategy}/{rand_uuid}/experience_0"
+                    f"{args.save_path}/{config.strategy}/{rand_uuid}/experience_{i}"
                 )
+
+        if config.use_wandb:
+            wandb_logger.wandb.finish()
 
 
 if __name__ == "__main__":
