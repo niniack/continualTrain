@@ -6,18 +6,20 @@ Ensure that any config JSON has at least the following fields:
     "dataset_path" : "/mnt/datasets/cifar100",
     "dataset_seed": 42,
     
-    "epochs": 1,
-    "num_experiences": 10,
-    "batch_size": 128,
     "learning_rate": 0.001,
-    "strategy": "naive",
+    "weight_decay": 1e-4,
+    "epochs": 3,
+    "batch_size": 128,
+    "momentum": 0.9,
+    "num_experiences": 10,
+    "strategy": "joint",
 
     "use_wandb": true,
     "wandb_project": "continualTrain",
     "wandb_entity": "nishantaswani",
 
-    "use_multihead": false,
-    "model_seeds": [0]
+    "use_multihead": true,
+    "model_seeds": [0,1]
 }
 ```
 
@@ -31,5 +33,5 @@ Set up a .env file
 ```env
 # This is secret and shouldn't be checked into version control
 WANDB_API_KEY=$SECRETY_KEY
-WANDB_DISABLE_GIT="true" #annoying when false
+WANDB_DISABLE_GIT=true #annoying when false
 ```
