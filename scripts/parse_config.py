@@ -22,6 +22,7 @@ required_keys = [
     "wandb_project",
     "wandb_entity",
     "use_multihead",
+    "save_frequency",
 ]
 
 

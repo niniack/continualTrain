@@ -20,6 +20,7 @@ from scripts.utils import (
     build_strategy,
     build_dataset,
     import_module_from_file,
+    generate_model_save_name,
 )
 
 """This script imports the given model file and executes training 
@@ -56,6 +57,7 @@ def main():
 
     # CONFIGURATION
     config, kwarg_dict = parse_config(Path(f"{args.config_file}"))
+    kwarg_dict.update({"rand_uuid": rand_uuid, "save_path": args.save_path})
     try:
         deviceID = GPUtil.getFirstAvailable(
             order="memory",
@@ -137,9 +139,14 @@ def main():
         if config.strategy == Strategy.JOINT:
             cl_strategy.train(train_stream)
             results.append(cl_strategy.eval(test_stream))
-            model.save_weights(
-                f"{args.save_path}/{config.strategy}/{rand_uuid}/experience_0"
+            save_name = generate_model_save_name(
+                save_path=args.save_path,
+                strategy=config.strategy,
+                rand_uuid=rand_uuid,
+                experience=0,
+                epoch=config.epochs,
             )
+            model.save_weights(save_name)
         else:
             for i, experience in enumerate(train_stream):
                 print("Start of experience: ", experience.current_experience)
@@ -150,9 +157,14 @@ def main():
 
                 print("Computing accuracy on the whole test set")
                 results.append(cl_strategy.eval(test_stream))
-                model.save_weights(
-                    f"{args.save_path}/{config.strategy}/{rand_uuid}/experience_{i}"
+                save_name = generate_model_save_name(
+                    save_path=args.save_path,
+                    strategy=config.strategy,
+                    rand_uuid=rand_uuid,
+                    experience=i,
+                    epoch=config.epochs,
                 )
+                model.save_weights(save_name)
 
         if config.use_wandb:
             wandb_logger.wandb.finish()
