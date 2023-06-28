@@ -119,7 +119,7 @@ def build_dataset(config, kwarg_dict):
             dataset_root=config.dataset_path,
             return_task_id=True,
             shuffle=True,
-            seed=config.dataset_seeed,
+            seed=config.dataset_seed,
         )
 
     elif config.dataset_name == Dataset.SPLITFMNIST:
