@@ -4,7 +4,12 @@ import inspect
 import importlib.util
 
 
-from avalanche.benchmarks.classic import SplitCIFAR100
+from avalanche.benchmarks.classic import (
+    SplitCIFAR100,
+    SplitCIFAR10,
+    SplitMNIST,
+    SplitFMNIST,
+)
 from avalanche.training.supervised import Naive, JointTraining, Cumulative
 from avalanche.training.plugins import (
     EWCPlugin,
@@ -88,6 +93,9 @@ class Strategy(Enum):
 
 class Dataset(Enum):
     SPLITCIFAR100 = "splitcifar100"
+    SPLITCIFAR10 = "splitcifar10"
+    SPLITMNIST = "splitmnist"
+    SPLITFMNIST = "splitfmnist"
 
 
 class Scenario(Enum):
@@ -98,6 +106,33 @@ class Scenario(Enum):
 def build_dataset(config, kwarg_dict):
     if config.dataset_name == Dataset.SPLITCIFAR100:
         dataset = SplitCIFAR100(
+            n_experiences=config.num_experiences,
+            dataset_root=config.dataset_path,
+            return_task_id=True,
+            shuffle=True,
+            seed=config.dataset_seed,
+        )
+
+    elif config.dataset_name == Dataset.SPLITCIFAR10:
+        dataset = SplitCIFAR10(
+            n_experiences=config.num_experiences,
+            dataset_root=config.dataset_path,
+            return_task_id=True,
+            shuffle=True,
+            seed=config.dataset_seeed,
+        )
+
+    elif config.dataset_name == Dataset.SPLITFMNIST:
+        dataset = SplitFMNIST(
+            n_experiences=config.num_experiences,
+            dataset_root=config.dataset_path,
+            return_task_id=True,
+            shuffle=True,
+            seed=config.dataset_seed,
+        )
+
+    elif config.dataset_name == Dataset.SPLITMNIST:
+        dataset = SplitMNIST(
             n_experiences=config.num_experiences,
             dataset_root=config.dataset_path,
             return_task_id=True,
