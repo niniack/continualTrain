@@ -111,7 +111,7 @@ def main():
         # Model
         ModelClass = import_module_from_file(Path(f"{args.model_file}"))
         model = ModelClass(
-            num_classes=100,
+            num_classes=config.model_classes,
             device=device,
             seed=model_seed,
             multihead=config.use_multihead,
