@@ -17,7 +17,7 @@ required_keys = [
     "strategy",
     # Model config
     "model_seeds",
-    "model_classes"
+    "model_classes",
     # Logging config
     "use_wandb",
     "wandb_project",
