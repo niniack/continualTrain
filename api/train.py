@@ -57,6 +57,7 @@ def docker_run_training(args):
         "--ulimit", "memlock=-1",
         "--ulimit", "stack=67108864",
         "--env-file", f"{project_directory}/.env",
+        "-e", f"PYTHONPATH=/model",
         "-v", f"{project_directory}:/workspace",
         "-v", f"{os.getenv('HOME')}/.ssh:/root/.ssh",
         "-v", f"{model_path}:/model",
