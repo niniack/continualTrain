@@ -64,7 +64,9 @@ class BaseModel(ABC, MultiTaskModule):
         # Handle multihead
         if self.is_multihead:
             path = Path(dir_name, "classifier.pt")
-            self.multihead_classifier.load_state_dict(torch.load(path), strict=False)
+            self.multihead_classifier.load_state_dict(
+                torch.load(path, map_location=self.device.type), strict=False
+            )
             self.multihead_classifier.to(self.device)
 
     @property

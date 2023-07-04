@@ -57,7 +57,9 @@ class CustomCNN(base.BaseModel):
 
     def _load_weights_impl(self, dir_name):
         # Load model
-        self.model.load_state_dict(torch.load(f"{dir_name}/model.pt"))
+        self.model.load_state_dict(
+            torch.load(f"{dir_name}/model.pt", map_location=self.device.type)
+        )
         self.model.to(self.device)
 
     def forward(self, x, task_labels=None):
