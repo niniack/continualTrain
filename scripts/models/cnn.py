@@ -90,16 +90,15 @@ class CustomCNN(base.BaseModel):
 
 
 class Net(nn.Module):
-    def __init__(self, num_classes, output_hidden):
+    def __init__(self, num_classes=10):
         super(Net, self).__init__()
         self.num_classes = num_classes
-        self.output_hidden = output_hidden
 
         self.features = nn.Sequential(
             nn.Sequential(
                 OrderedDict(
                     [
-                        ("convolution", nn.Conv2d(1, 6, kernel_size=5)),
+                        ("convolution", nn.Conv2d(1, 3, kernel_size=3)),
                         ("activation", nn.ReLU()),
                     ]
                 )
@@ -107,7 +106,7 @@ class Net(nn.Module):
             nn.Sequential(
                 OrderedDict(
                     [
-                        ("convolution", nn.Conv2d(6, 12, kernel_size=5)),
+                        ("convolution", nn.Conv2d(3, 6, kernel_size=3)),
                         ("activation", nn.ReLU()),
                         ("dropout", nn.Dropout2d()),
                     ]
@@ -115,14 +114,15 @@ class Net(nn.Module):
             ),
         )
         self.pooler = nn.MaxPool2d(2)
-        self.classifier = nn.Sequential(nn.Linear(1200, num_classes))
+        self.classifier = nn.Sequential(nn.Linear(6 * 22 * 22, self.num_classes))
 
     def forward(self, x):
         stage_one = self.features[0](x)
         stage_two = self.features[1](stage_one)
         features_output = stage_two
         pooler_output = self.pooler(stage_two)
-        logits = self.classifier(pooler_output.view(pooler_output.size(0), -1))
+        flattened = pooler_output.view(pooler_output.size(0), -1)
+        logits = self.classifier(flattened)
         return {
             "last_hidden_state": features_output,
             "pooler_output": pooler_output,
