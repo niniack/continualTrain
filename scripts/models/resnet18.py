@@ -85,11 +85,10 @@ class CustomResNet18(base.BaseModel):
         self.model.to(self.device)
 
     def forward(self, x, task_labels=None):
-        out = self.model.resnet(
-            x, output_hidden_states=self.output_hidden, return_dict=True
-        )
-
         if self.is_multihead:
+            out = self.model.resnet(
+                x, output_hidden_states=self.output_hidden, return_dict=True
+            )
             # For multihead situation, must provide task labels!
             assert (
                 task_labels != None
@@ -101,6 +100,9 @@ class CustomResNet18(base.BaseModel):
             # Feed to multihead classifier
             classifier_out = self.multihead_classifier(flat_pooler_out, task_labels)
         else:
+            out = self.model(
+                x, output_hidden_states=self.output_hidden, return_dict=True
+            )
             classifier_out = out.logits
 
         if self.output_hidden:
