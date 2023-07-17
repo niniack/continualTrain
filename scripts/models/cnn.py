@@ -21,17 +21,18 @@ class CustomCNN(base.BaseModel):
         Returns:
             Simple CNN model
         """
+        in_features = 4608
 
         super().__init__(
             seed=seed,
             output_hidden=output_hidden,
             is_multihead=multihead,
             device=device,
-            in_features=1200,
+            in_features=in_features,
             out_features=num_classes,
         )
 
-        self._model = Net(output_hidden=output_hidden, num_classes=num_classes)
+        self._model = Net(in_features=in_features, num_classes=num_classes)
         self._hidden_layers = ["features.0", "features.1"]
         self._num_hidden = len(self.hidden_layers)
 
@@ -90,7 +91,7 @@ class CustomCNN(base.BaseModel):
 
 
 class Net(nn.Module):
-    def __init__(self, num_classes=10):
+    def __init__(self, in_features, num_classes):
         super(Net, self).__init__()
         self.num_classes = num_classes
 
@@ -98,7 +99,7 @@ class Net(nn.Module):
             nn.Sequential(
                 OrderedDict(
                     [
-                        ("convolution", nn.Conv2d(1, 3, kernel_size=3)),
+                        ("convolution", nn.Conv2d(1, 16, kernel_size=3)),
                         ("activation", nn.ReLU()),
                     ]
                 )
@@ -106,7 +107,7 @@ class Net(nn.Module):
             nn.Sequential(
                 OrderedDict(
                     [
-                        ("convolution", nn.Conv2d(3, 6, kernel_size=3)),
+                        ("convolution", nn.Conv2d(16, 32, kernel_size=3)),
                         ("activation", nn.ReLU()),
                         ("dropout", nn.Dropout2d()),
                     ]
@@ -114,7 +115,7 @@ class Net(nn.Module):
             ),
         )
         self.pooler = nn.MaxPool2d(2)
-        self.classifier = nn.Sequential(nn.Linear(6 * 22 * 22, self.num_classes))
+        self.classifier = nn.Sequential(nn.Linear(in_features, self.num_classes))
 
     def forward(self, x):
         stage_one = self.features[0](x)
