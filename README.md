@@ -6,6 +6,12 @@ A tool to centralize the exeuction of continual learning models from anywhere fo
 
 Batteries included: an interface to common strategies and common models, along with a logging module to WandB. If you want to supplement functionality, this should be supported.
 
+#### Good to know
+
+The parent directory of each file provided as an argument to the `train.py` module is mounted. There are three mount: model path, config path, and save path. At the moment, no optional mounts are supported.
+
+All model classes must have a "save_weight" method which takes in a relative path for save location.
+
 #### Base JSON
 Ensure that any config JSON has at least the following fields:
 
@@ -41,7 +47,7 @@ MAS: `mas_lambda, mas_alpha`
 REPLAY: `replay_mem_size`
 
 #### Other
-- All model classes submitted must have a "save_weight" method which takes in a relative path for save location
+- 
 
 - Set up a .env file
 
