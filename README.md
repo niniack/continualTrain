@@ -1,3 +1,11 @@
+#### What is continualTrain?
+
+A tool to centralize the exeuction of continual learning models from anywhere for any project, given you have it locally installed and follow the interfacing instructions.
+
+#### What does it contain?
+
+Batteries included: an interface to common strategies and common models, along with a logging module to WandB. If you want to supplement functionality, this should be supported.
+
 #### Base JSON
 Ensure that any config JSON has at least the following fields:
 
