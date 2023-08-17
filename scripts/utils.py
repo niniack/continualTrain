@@ -44,21 +44,6 @@ class ModelSaverPlugin(SupervisedPlugin):
             strategy.model.save_weights(save_name)
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Train a model.")
-    parser.add_argument(
-        "--config", type=str, required=True, help="Path to JSON model config file"
-    )
-    parser.add_argument(
-        "--model_file",
-        type=str,
-        required=True,
-        help="Path to Python file defining model",
-    )
-    args = parser.parse_args()
-    return args
-
-
 def import_module_from_file(file_path):
     spec = importlib.util.spec_from_file_location("model", file_path)
     if spec is None:
