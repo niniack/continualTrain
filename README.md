@@ -10,9 +10,11 @@ Batteries included: an interface to common strategies and common models, along w
 
 The parent directory of each file provided as an argument to the `train.py` module is mounted. There are three mount: model path, config path, and save path. At the moment, no optional mounts are supported.
 
-All model classes must have a "save_weight" method which takes in a relative path for save location.
+#### Models
 
-#### Base JSON
+All model classes must have a "save_weight" method which takes in a relative path for save location. There is a base model class that you should probably inherit to ensure everything works smoothly.
+
+#### JSON Configs
 Ensure that any config JSON has at least the following fields:
 
 ```
