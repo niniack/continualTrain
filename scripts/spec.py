@@ -8,7 +8,7 @@ from typing import List, Tuple, Union
 hookspec = pluggy.HookspecMarker("continualTrain")
 
 
-@hookspec(firstresult=True)
+@hookspec(firstresult=True, optional=False)
 def get_dataset(root_path: str, seed: int) -> object:
     """
     Retrieves the dataset for the training process.
@@ -19,7 +19,7 @@ def get_dataset(root_path: str, seed: int) -> object:
     """
 
 
-@hookspec(firstresult=True)
+@hookspec(firstresult=True, optional=False)
 def get_model(device: str, seed: int) -> Module:
     """
     Constructs and retrieves the model for the training process.
@@ -30,7 +30,7 @@ def get_model(device: str, seed: int) -> Module:
     """
 
 
-@hookspec(firstresult=True)
+@hookspec(firstresult=True, optional=False)
 def get_strategy(
     model: Module,
     optimizer: Optimizer,
@@ -52,7 +52,7 @@ def get_strategy(
     """
 
 
-@hookspec(firstresult=True)
+@hookspec(firstresult=True, optional=False)
 def get_optimizer(parameters: Union[List, Tuple]) -> Optimizer:
     """
     Constructs and retrieves the optimizer for the training process.
@@ -62,7 +62,7 @@ def get_optimizer(parameters: Union[List, Tuple]) -> Optimizer:
     """
 
 
-@hookspec(firstresult=True)
+@hookspec(firstresult=True, optional=False)
 def get_criterion() -> Module:
     """
     Constructs and retrieves the criterion (loss function) for the training process.
@@ -80,7 +80,7 @@ required_metadata_keys = {
 }
 
 
-@hookspec(firstresult=True)
+@hookspec(firstresult=True, optional=False)
 def get_metadata() -> dict:
     """
     Retrieves metadata information.
