@@ -11,42 +11,38 @@ def parse_args():
         description="Train a CL model in a Docker container."
     )
     parser.add_argument(
-        "--config", type=str, help="Path to JSON model config file", required=True
-    )
-    parser.add_argument(
-        "--model_file",
-        type=str,
-        help="Path to Python file defining model",
-        required=True,
-    )
-    parser.add_argument(
         "--save_path",
         type=str,
         required=True,
         help="Path to save models",
+    )
+    parser.add_argument(
+        "--dataset_path",
+        type=str,
+        default="/mnt",  # you can keep a default value if you want
+        help="Path to datasets directory",
+    )
+    parser.add_argument(
+        "--use_wandb", action="store_true", default=True, help="Uses WandB logging"
     )
     args = parser.parse_args()
     return args
 
 
 def build_docker_image():
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    parent_dir = os.path.dirname(script_dir)
-    docker_dir = os.path.join(parent_dir, "docker")
-    command = ["docker", "build", "-t", "continual_train", docker_dir]
+    script_dir = Path(__file__).resolve().parent
+    parent_dir = script_dir.parent
+    docker_dir = parent_dir / "docker"
+    command = ["docker", "build", "-t", "continual_train", str(docker_dir)]
     subprocess.run(command, check=True)
 
 
 # fmt: off
 def docker_run_training(args):
-    # Resolve paths to absolute paths
-    model_path = Path(args.model_file).resolve().parent
-    model_file = Path(args.model_file).resolve().name
-
-    config_path = Path(args.config).resolve().parent
-    config_file = Path(args.config).resolve().name
-
     save_path = Path(args.save_path).resolve()
+    
+    if not save_path.exists():
+        raise ValueError(f"The provided save_path '{save_path}' does not exist!")
     
     project_directory = Path(__file__).resolve().parent.parent
 
@@ -57,23 +53,19 @@ def docker_run_training(args):
         "--ulimit", "memlock=-1",
         "--ulimit", "stack=67108864",
         "--env-file", f"{project_directory}/.env",
-        "-e", f"PYTHONPATH=/model",
         "-v", f"{project_directory}:/workspace",
         "-v", f"{os.getenv('HOME')}/.ssh:/root/.ssh",
-        "-v", f"{model_path}:/model",
-        "-v", f"{config_path}:/config",
         "-v", f"{save_path}:/save",
-        "-v", "/mnt:/mnt",
-        # "-v", f"{os.getenv('HOME')}/.avalanche:/root/.avalanche",
-        # "-v", "/home/alodie/datasets:/root/datasets",
+       "-v", f"{args.dataset_path}:/datasets",  # Mount the provided dataset directory to /datasets in the container
         image_name, "/bin/bash", "-c",
         f"cd /workspace && pip install -e . && \
           python /workspace/scripts/run_training.py \
-        --config_file /config/{config_file} \
-        --model_file /model/{model_file} \
         --save_path /save"
     ]
-    
+
+    if args.use_wandb:
+        command.extend(["--use_wandb"])
+
     subprocess.run(command, check=True)
 # fmt: on
 

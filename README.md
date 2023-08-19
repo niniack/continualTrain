@@ -1,57 +1,18 @@
 #### What is continualTrain?
 
-A tool to centralize the exeuction of continual learning models from anywhere for any project, given you have it locally installed and follow the interfacing instructions.
+A tool to centralize the execution of continual learning models in Avalanche, from anywhere, for any project, given you follow the interfacing instructions.
 
 #### What does it contain?
 
-Batteries included: an interface to common strategies and common models, along with a logging module to WandB. If you want to supplement functionality, this should be supported.
+This repository doesn't claim to do too much aside from run the main training loop and log things. As such, it contains a training loop skeleton + a logging module.
 
-#### Good to know
+Bring Your Own Batteries (BYOB): continualTrain is an interface that runs the main training loop inside an already defined docker container, along with a comprehensive logging module to WandB. You bring your own model and strategies.
 
-The parent directory of each file provided as an argument to the `train.py` module is mounted. There are three mount: model path, config path, and save path. At the moment, no optional mounts are supported.
+Everything is a plugin. Some are required (e.g. model, strategy, dataset), and others are not. If you don't give continualTrain a plugin, it will use a default plugin.
 
-#### Models
+#### Environment File
 
-All model classes must have a "save_weight" method which takes in a relative path for save location. There is a base model class that you should probably inherit to ensure everything works smoothly.
-
-#### JSON Configs
-Ensure that any config JSON has at least the following fields:
-
-```
-{
-    "dataset_name" : "splitcifar100",
-    "dataset_path" : "/mnt/datasets/cifar100",
-    "dataset_seed": 42,
-    
-    "learning_rate": 0.001,
-    "weight_decay": 1e-4,
-    "epochs": 3,
-    "batch_size": 128,
-    "momentum": 0.9,
-    "num_experiences": 10,
-    "strategy": "joint",
-
-    "use_wandb": true,
-    "wandb_project": "continualTrain",
-    "wandb_entity": "nishantaswani",
-
-    "use_multihead": true,
-    "model_seeds": [0,1]
-}
-```
-#### Other JSON Keys
-For strategy/plugin specific arguments:
-https://avalanche-api.continualai.org/en/v0.3.1/training.html#training-plugins
-
-EWC: `ewc_lambda`
-RWALK: `rwalk_lambda, rwalk_alpha, rwalk_delta_t`
-MAS: `mas_lambda, mas_alpha`
-REPLAY: `replay_mem_size`
-
-#### Other
-- 
-
-- Set up a .env file
+Set up a .env file to do WandB logging
 
 ```env
 # This is secret and shouldn't be checked into version control
