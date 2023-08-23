@@ -4,6 +4,7 @@ FROM nvcr.io/nvidia/pytorch:22.12-py3
 # Set up environment variables to ensure conda is prioritized
 ENV PATH /opt/conda/bin:$PATH
 ENV LD_LIBRARY_PATH /opt/conda/lib:$LD_LIBRARY_PATH
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install required tools and libraries, and clean up to reduce layer size
 RUN apt-get update && apt-get install -y wget software-properties-common \
@@ -14,9 +15,9 @@ RUN apt-get update && apt-get install -y wget software-properties-common \
     && echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc \
     && echo "conda activate base" >> ~/.bashrc \
     && /opt/conda/bin/conda clean -tipy \
-    && DEBIAN_FRONTEND=noninteractive add-apt-repository ppa:ubuntu-toolchain-r/test -y \
+    && add-apt-repository -y ppa:ubuntu-toolchain-r/test \
     && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y libstdc++6 \
+    && apt-get install -y libstdc++6 \
     && wget "https://github.com/aristocratos/btop/releases/latest/download/btop-x86_64-linux-musl.tbz" \
     && tar xvjf btop-x86_64-linux-musl.tbz -C /usr/local/bin \
     && rm btop-x86_64-linux-musl.tbz \
