@@ -8,7 +8,6 @@ import torch
 
 import pluggy
 
-import avalanche
 from avalanche.logging import InteractiveLogger, WandBLogger
 from avalanche.training.plugins import EvaluationPlugin
 from avalanche.evaluation.metrics import accuracy_metrics

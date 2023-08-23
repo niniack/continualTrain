@@ -4,7 +4,7 @@ from enum import Enum
 # import inspect
 # import importlib.util
 
-from avalanche import SupervisedPlugin
+from avalanche.core import SupervisedPlugin
 
 # from avalanche.benchmarks.classic import (
 #     SplitCIFAR100,
