@@ -11,6 +11,11 @@ def parse_args():
         description="Train a CL model in a Docker container."
     )
     parser.add_argument(
+        "hook_implementation",
+        type=str,
+        help="Path with your hook implementations to drive the training script.",
+    )
+    parser.add_argument(
         "--save_path",
         type=str,
         required=True,
@@ -60,6 +65,7 @@ def docker_run_training(args):
         image_name, "/bin/bash", "-c",
         f"cd /workspace && pip install -e . && \
           python /workspace/scripts/run_training.py \
+          {args.hook_implementation} \
         --save_path /save"
     ]
 

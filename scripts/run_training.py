@@ -1,6 +1,7 @@
 import argparse
 import json
 import shortuuid
+import importlib.util
 
 import GPUtil
 import torch
@@ -31,6 +32,11 @@ def parse_args():
 
     # Grabs arguments from API
     parser.add_argument(
+        "hook_implementation",
+        type=str,
+        help="Path with your hook implementations to drive the training script.",
+    )
+    parser.add_argument(
         "--save_path",
         type=str,
         required=True,
@@ -44,6 +50,9 @@ def parse_args():
 
 
 def main():
+    # Args from the CLI interface
+    args = parse_args()
+
     # Initialize Plugin manager
     pm = pluggy.PluginManager("continualTrain")
     pm.add_hookspecs(spec)
@@ -51,14 +60,18 @@ def main():
     # Register default implementations first
     pm.register(defaults)
 
-    # Load plugins (assuming setuptools entry points)
-    pm.load_setuptools_entrypoints("continualTrain")
+    # Dynamic loading of the provided plugin
+    plugin_spec = importlib.util.spec_from_file_location(
+        "user_plugin", args.hook_implementation
+    )
+    plugin_module = importlib.util.module_from_spec(plugin_spec)
+    plugin_spec.loader.exec_module(plugin_module)
+
+    # Register the loaded plugin with pluggy
+    pm.register(plugin_module)
 
     # Generate a UUID for logging purposes
     rand_uuid = str(shortuuid.uuid())[:4]
-
-    # Args from the CLI interface
-    args = parse_args()
 
     # Get metadata from pluggy
     metadata = pm.hook.get_metadata()
