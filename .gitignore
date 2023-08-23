@@ -4,3 +4,4 @@ wandb
 .vscode
 __pycache__
 *.env
+parse_config.py
