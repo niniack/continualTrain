@@ -88,7 +88,7 @@ def main():
     dataset_name = metadata["dataset_name"]
     model_name = metadata["model_name"]
     wandb_entity = metadata["wandb_entity"]
-    wandb_project = metadata["wandb_project"]
+    wandb_project_name = metadata["wandb_project_name"]
 
     # Get a GPU
     try:
@@ -109,7 +109,7 @@ def main():
     interactive_logger = InteractiveLogger()
 
     # Benchmark obtained from the plugin manager
-    dataset = pm.hook.build_dataset(root_path="/datasets", seed=DS_SEED)
+    dataset = pm.hook.get_dataset(root_path="/datasets", seed=DS_SEED)
     train_stream = dataset.train_stream
     test_stream = dataset.test_stream
 
@@ -122,7 +122,7 @@ def main():
             run_name = f"{rand_uuid}_seed{model_seed}_{strategy_name}_{dataset_name}"
             wandb_params = {"entity": wandb_entity, "name": run_name}
             wandb_logger = WandBLogger(
-                project_name=wandb_project,
+                project_name=wandb_project_name,
                 params=wandb_params,
                 # config=config_dict,
             )
