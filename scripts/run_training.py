@@ -41,9 +41,7 @@ def parse_args():
         required=True,
         help="Path to save models",
     )
-    parser.add_argument(
-        "--use_wandb", action="store_true", default=True, help="Uses WandB logging"
-    )
+    parser.add_argument("--use_wandb", action="store_true", help="Uses WandB logging")
     args = parser.parse_args()
     return args
 
@@ -124,7 +122,6 @@ def main():
             wandb_logger = WandBLogger(
                 project_name=wandb_project_name,
                 params=wandb_params,
-                # config=config_dict,
             )
             loggers.append(wandb_logger)
 

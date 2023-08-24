@@ -48,7 +48,8 @@ def docker_run_training(args):
             "--ipc=host",
             "--ulimit", "memlock=-1",
             "--ulimit", "stack=67108864",
-            "--env-file", f"{this_dir}/.env",
+            "-e", f"{config['wandb_api_key']}",
+            "-e", "WANDB_DISABLE_GIT",
             # Mount this directory
             "-v", f"{this_dir}:/workspace",
             "-v", f"{training_dir_path}:/training_dir",
@@ -62,7 +63,7 @@ def docker_run_training(args):
             --save_path /save"
         ]
 
-        if config.get('use_wandb', False):
+        if config.get('wandb_enable_logging', True):
             command.extend(["--use_wandb"])
         
         process = subprocess.Popen(command)

@@ -3,7 +3,13 @@ import argparse
 from pathlib import Path
 
 
-REQUIRED_KEYS = ["save_path", "dataset_path", "use_wandb", "training_dir"]
+REQUIRED_KEYS = [
+    "save_path",
+    "dataset_path",
+    "training_dir",
+    "wandb_enable_logging",
+    "wandb_api_key",
+]
 
 
 def yaml_file(file_path):
