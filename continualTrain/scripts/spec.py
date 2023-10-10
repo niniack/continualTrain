@@ -1,9 +1,9 @@
+from typing import List, Tuple, Union
+
 import pluggy
 from torch.nn import Module
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import Dataset
-from typing import List, Tuple, Union
-
 
 hookspec = pluggy.HookspecMarker("continualTrain")
 

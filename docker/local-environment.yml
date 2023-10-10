@@ -1,8 +1,0 @@
-name: local_env
-channels:
-dependencies:
-   - conda-forge::gputil
-   - conda-forge::pluggy
-   - pip:
-     - avalanche-lib
-     - shortuuid

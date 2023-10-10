@@ -1,24 +1,24 @@
 import argparse
-import json
-import shortuuid
 import importlib.util
+import json
+import sys
 
+import defaults
 import GPUtil
-import torch
-
 import pluggy
-
+import shortuuid
+import spec
+import torch
+from avalanche.evaluation.metrics import accuracy_metrics
 from avalanche.logging import InteractiveLogger, WandBLogger
 from avalanche.training.plugins import EvaluationPlugin
-from avalanche.evaluation.metrics import accuracy_metrics
 from avalanche.training.supervised.joint_training import JointTraining
-
-import spec, defaults
 from utils import (
     DS_SEED,
     MODEL_SEEDS,
-    generate_model_save_name,
     ModelSaverPlugin,
+    generate_model_save_name,
+    verify_model_save_weights,
 )
 
 """This script imports the given model file and executes training 
@@ -102,6 +102,16 @@ def main():
         print(f"Error obtaining GPU: {e}")
         deviceID = None
     device = torch.device(f"cuda:{deviceID[0]}" if deviceID is not None else "cpu")
+
+    # Verify model can save
+    temp_model = pm.hook.get_model(device=device, seed=0)
+
+    if not verify_model_save_weights(temp_model):
+        print("Error: Model does not have a save_weights method.")
+        del temp_model  # cleanup
+        sys.exit(1)  # exit the program with an error code
+
+    del temp_model
 
     # Set up printing locally
     interactive_logger = InteractiveLogger()
