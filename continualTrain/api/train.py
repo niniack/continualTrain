@@ -21,7 +21,8 @@ def parse_args():
     return args
 
 
-def build_docker_image():
+def build_docker_image(config):
+    dependencies_str = " ".join(config["dependencies"])
     script_dir = Path(__file__).resolve().parent
     parent_dir = script_dir.parent
     docker_dir = parent_dir / "docker"
@@ -30,6 +31,8 @@ def build_docker_image():
         "build",
         "-t",
         image_name,
+        "--build-arg",
+        f"ADDITIONAL_DEPS={dependencies_str}",
         "-f",
         str(docker_dir / "Dockerfile"),
         str(parent_dir.parent),
@@ -38,10 +41,8 @@ def build_docker_image():
 
 
 # fmt: off
-def docker_run_training(args):
-    config = read_toml_config(args.training_config)
-    dependencies_str = " ".join(config['dependencies'])
-
+def docker_run_training(config):
+    
     save_path = check_path_exists(config['save_path'], 'save_path')
     dataset_path = check_path_exists(config['dataset_path'], 'dataset_path')
     training_dir_path = check_path_exists(config['training_dir'], 'training_dir')
@@ -65,16 +66,6 @@ def docker_run_training(args):
         "-v", f"{save_path}:/save",
         "-v", f"{dataset_path}:/datasets",  
     ]
-    # Initial setup container to install deps 
-    print(dependencies_str)
-    initial_setup_command = [
-        "docker", "run", "-it", "--rm",
-        *docker_environment,
-        image_name, "/bin/bash"
-        , "-c",
-        f"cd /training_dir && poetry add {dependencies_str}"
-    ]
-    subprocess.run(initial_setup_command, check=True)
 
     # Now, start the training processes for each hook implementation
     for impl in hook_impl_files:
@@ -102,8 +93,9 @@ def docker_run_training(args):
 
 def main():
     args = parse_args()
-    build_docker_image()
-    docker_run_training(args)
+    config = read_toml_config(args.training_config)
+    build_docker_image(config)
+    docker_run_training(config)
 
 
 if __name__ == "__main__":

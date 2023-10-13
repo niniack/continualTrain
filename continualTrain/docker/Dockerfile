@@ -61,4 +61,8 @@ RUN poetry install --no-root --only torch
 # Install the remaining dependencies
 RUN poetry install --no-root --with docker
 
+# Install additional dependencies from project
+ARG ADDITIONAL_DEPS
+RUN poetry add $ADDITIONAL_DEPS
+
 # USER $USERNAME
