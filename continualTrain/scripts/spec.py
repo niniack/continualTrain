@@ -1,6 +1,7 @@
 from typing import List, Tuple, Union
 
 import pluggy
+from avalanche.training.plugins import EvaluationPlugin
 from torch.nn import Module
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import Dataset
@@ -68,6 +69,14 @@ def get_criterion() -> Module:
     Constructs and retrieves the criterion (loss function) for the training process.
 
     :return: A loss criterion object.
+    """
+
+
+@hookspec(firstresult=True)
+def get_evaluator(loggers) -> EvaluationPlugin:
+    """Constructs and retreives the evaluator plugin
+
+    :param loggers: The loggers to use with the evaluator
     """
 
 

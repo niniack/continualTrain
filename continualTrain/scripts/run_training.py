@@ -149,16 +149,7 @@ def main():
             loggers.append(wandb_logger)
 
         # Set up evaluator, which accepts loggers
-        eval_plugin = EvaluationPlugin(
-            accuracy_metrics(
-                minibatch=False,
-                epoch=True,
-                epoch_running=False,
-                experience=True,
-                stream=False,
-            ),
-            loggers=loggers,
-        )
+        eval_plugin = pm.hook.get_evaluator(loggers=loggers)
 
         # Model from plugin manager
         model = pm.hook.get_model(device=device, seed=model_seed)
