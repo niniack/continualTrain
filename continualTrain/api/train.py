@@ -1,21 +1,43 @@
 import argparse
 import os
 import subprocess
+import textwrap
 from pathlib import Path
 
-from .utils import check_path_exists, read_toml_config, toml_file
+from .utils import (
+    OPTIONAL_KEYS,
+    REQUIRED_KEYS,
+    check_path_exists,
+    read_toml_config,
+    toml_file,
+)
 
 image_name = "continual_train"
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Train a CL model in a Docker container."
+        description="Train a CL model in a Docker container.",
+        formatter_class=argparse.RawTextHelpFormatter,  # Use the RawTextHelpFormatter
     )
+
+    required_text = textwrap.indent("\n".join(REQUIRED_KEYS), "  - ")
+    optional_text = textwrap.indent("\n".join(OPTIONAL_KEYS), "  - ")
+
+    help_text = textwrap.dedent(
+        f"""
+        Path to a TOML configuration. The TOML file must be configured with the following keys:
+        Required:
+        {required_text}
+        Optional:
+        {optional_text}
+    """
+    ).strip()
+
     parser.add_argument(
         "training_config",
         type=toml_file,
-        help="Path to a YAML configuration.",
+        help=help_text,
     )
     args = parser.parse_args()
     return args
@@ -58,7 +80,7 @@ def docker_run_training(config):
         "--ipc=host",
         "--ulimit", "memlock=-1",
         "--ulimit", "stack=67108864",
-        "-e", f"{config['wandb_api_key']}",
+        "-e", f"WANDB_API_KEY={config['wandb_api_key']}",
         "-e", "WANDB_DISABLE_GIT",
         "-v", f"{this_dir}:/workspace",
         "-v", f"{training_dir_path}:/training_dir",
@@ -69,18 +91,31 @@ def docker_run_training(config):
 
     # Now, start the training processes for each hook implementation
     for impl in hook_impl_files:
+        # Start with the base command string:
+        cmd_str = (
+            f"cd /workspace && "
+            f"poetry run python /workspace/scripts/run_training.py "
+            f"/training_dir/{impl.name} "
+            f"--save_path /save"
+        )
+
+        # Add optional arguments to the command string:
+        if config.get('wandb_enable_logging', True):
+            cmd_str += " --use_wandb"
+
+        if 'train_experiences' in config:
+            cmd_str += f" --train_experiences {config['train_experiences']}"
+
+        if 'eval_experiences' in config:
+            cmd_str += f" --eval_experiences {config['eval_experiences']}"
+
+        # Construct the full Docker command:
         command = [
             "docker", "run", "-it", "--rm",
             *docker_environment,
             image_name, "/bin/bash", "-c",
-            f"cd /workspace && \
-            poetry run python /workspace/scripts/run_training.py \
-            /training_dir/{impl.name} \
-            --save_path /save"
+            cmd_str   # Add the constructed command string here
         ]
-
-        if config.get('wandb_enable_logging', True):
-            command.extend(["--use_wandb"])
         
         process = subprocess.Popen(command)
         processes.append(process)

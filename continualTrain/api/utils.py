@@ -11,6 +11,8 @@ REQUIRED_KEYS = [
     "wandb_api_key",
 ]
 
+OPTIONAL_KEYS = ["dependencies", "train_experiences", "eval_experiences"]
+
 
 def toml_file(file_path):
     if not file_path.endswith(".toml"):

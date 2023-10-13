@@ -42,6 +42,12 @@ def parse_args():
         help="Path to save models",
     )
     parser.add_argument("--use_wandb", action="store_true", help="Uses WandB logging")
+    parser.add_argument(
+        "--train_experiences", type=int, help="Number of experiences to train on"
+    )
+    parser.add_argument(
+        "--eval_experiences", type=int, help="Number of experiences to evaluate on"
+    )
     args = parser.parse_args()
     return args
 
@@ -116,8 +122,16 @@ def main():
 
     # Benchmark obtained from the plugin manager
     dataset = pm.hook.get_dataset(root_path="/datasets", seed=DS_SEED)
-    train_stream = dataset.train_stream
-    test_stream = dataset.test_stream
+    train_stream = (
+        dataset.train_stream[: int(args.train_experiences)]
+        if hasattr(args, "train_experiences")
+        else dataset.train_stream
+    )
+    test_stream = (
+        dataset.test_stream[: int(args.eval_experiences)]
+        if hasattr(args, "eval_experiences")
+        else dataset.test_stream
+    )
 
     # TRAINING
     for model_seed in MODEL_SEEDS:
@@ -188,14 +202,17 @@ def main():
             model.save_weights(save_name)
         else:
             for i, experience in enumerate(train_stream):
+                # Invoke strategy train method
                 print("Start of experience: ", experience.current_experience)
                 print("Current Classes: ", experience.classes_in_this_experience)
-
                 cl_strategy.train(experience)
                 print("Training completed")
 
-                print("Computing accuracy on the whole test set")
+                # Invoke strategy evaluation method
+                print("Evaluating experiences")
                 results.append(cl_strategy.eval(test_stream))
+
+                # Save model
                 save_name = generate_model_save_name(
                     save_path=args.save_path,
                     strategy=strategy_name,
