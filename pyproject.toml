@@ -19,9 +19,9 @@ toml = { version = "*"}
 optional = true
 
 [tool.poetry.group.torch.dependencies]
-torch = {version = "2.0.0", source = "torch"}
-torchvision = {version = "0.15.1", source = "torch"}
-torchaudio = {version = "2.0.1", source = "torch"}
+torch = {version = "<2.0.0", source = "torch"}
+torchvision = {version = "<0.15", source = "torch"}
+torchaudio = {version = "<2.0", source = "torch"}
 
 [tool.poetry.group.docker]
 optional = true
@@ -34,13 +34,10 @@ shortuuid = { version = "*"}
 natsort = { version = "*"}
 continualUtils = { git = "https://github.com/niniack/continualUtils.git", branch = "dev"}
 
-# [tool.poetry.extras]
-# docker = ["torch", "torchvision", "avalanche-lib", "pylint", "gputil", "pluggy", "shortuuid", "natsort", "continualUtils"]
-
 [tool.poetry.scripts]
 continual_train = "continualTrain.api.train:main"
 
 [[tool.poetry.source]]
 name = "torch"
-url = "https://download.pytorch.org/whl/cu118"
+url = "https://download.pytorch.org/whl/cu117"
 priority = "explicit"

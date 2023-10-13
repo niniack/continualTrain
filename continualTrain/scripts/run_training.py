@@ -105,12 +105,10 @@ def main():
 
     # Verify model can save
     temp_model = pm.hook.get_model(device=device, seed=0)
-
     if not verify_model_save_weights(temp_model):
         print("Error: Model does not have a save_weights method.")
         del temp_model  # cleanup
         sys.exit(1)  # exit the program with an error code
-
     del temp_model
 
     # Set up printing locally
@@ -123,10 +121,11 @@ def main():
 
     # TRAINING
     for model_seed in MODEL_SEEDS:
-        # Set up logging
+        # Set up interactive logging
         loggers = [interactive_logger]
+
+        # Set up wandb logging, if requested
         if args.use_wandb:
-            # Run name
             run_name = f"{rand_uuid}_seed{model_seed}_{strategy_name}_{dataset_name}"
             wandb_params = {"entity": wandb_entity, "name": run_name}
             wandb_logger = WandBLogger(
@@ -135,6 +134,7 @@ def main():
             )
             loggers.append(wandb_logger)
 
+        # Set up evaluator, which accepts loggers
         eval_plugin = EvaluationPlugin(
             accuracy_metrics(
                 minibatch=False,
@@ -153,20 +153,22 @@ def main():
         optimizer = pm.hook.get_optimizer(parameters=model.parameters())
         criterion = pm.hook.get_criterion()
 
-        # Training strategy
+        # Set up Avalanche strategy plugins
         model_saver_plugin = ModelSaverPlugin(
             save_frequency=10,
             strategy_name=strategy_name,
             rand_uuid=rand_uuid,
             save_path=args.save_path,
         )
+        plugins = [model_saver_plugin]
 
+        # Training strategy
         cl_strategy = pm.hook.get_strategy(
             model=model,
             optimizer=optimizer,
             criterion=criterion,
             evaluator=eval_plugin,
-            plugins=[model_saver_plugin],
+            plugins=plugins,
             device=device,
         )
 
