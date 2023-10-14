@@ -1,7 +1,6 @@
 import argparse
 import os
 import subprocess
-import textwrap
 from pathlib import Path
 
 from .utils import (
@@ -21,18 +20,16 @@ def parse_args():
         formatter_class=argparse.RawTextHelpFormatter,  # Use the RawTextHelpFormatter
     )
 
-    required_text = textwrap.indent("\n".join(REQUIRED_KEYS), "  - ")
-    optional_text = textwrap.indent("\n".join(OPTIONAL_KEYS), "  - ")
+    required_text = "\n".join(f"  - {key}" for key in REQUIRED_KEYS)
+    optional_text = "\n".join(f"  - {key}" for key in OPTIONAL_KEYS)
 
-    help_text = textwrap.dedent(
-        f"""
-        Path to a TOML configuration. The TOML file must be configured with the following keys:
-        Required:
-        {required_text}
-        Optional:
-        {optional_text}
-    """
-    ).strip()
+    help_text = (
+        "Path to a TOML configuration. The TOML file must be configured with the following keys:\n"
+        "Required:\n"
+        f"{required_text}\n"
+        "\nOptional:\n"
+        f"{optional_text}"
+    )
 
     parser.add_argument(
         "training_config",
