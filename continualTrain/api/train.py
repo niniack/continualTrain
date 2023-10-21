@@ -3,6 +3,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import requests
+
 from .utils import (
     OPTIONAL_KEYS,
     REQUIRED_KEYS,
@@ -40,16 +42,34 @@ def parse_args():
     return args
 
 
+def get_latest_commit_sha(repo_url, branch="master"):
+    # Extract repo details from the URL
+    user, repo = repo_url.split("/")[-2:]
+
+    # GitHub API endpoint to get the latest commit SHA for the specified branch
+    api_url = f"https://api.github.com/repos/{user}/{repo}/commits/{branch}"
+
+    response = requests.get(api_url)
+    response.raise_for_status()  # Ensure we got a successful response
+
+    return response.json()["sha"]
+
+
 def build_docker_image(config):
     dependencies_str = " ".join(config["dependencies"])
     script_dir = Path(__file__).resolve().parent
     parent_dir = script_dir.parent
     docker_dir = parent_dir / "docker"
+    LATEST_COMMIT = get_latest_commit_sha(
+        "https://github.com/niniack/continualUtils", "dev"
+    )
     command = [
         "docker",
         "build",
         "-t",
         image_name,
+        "--build-arg",
+        f"CACHEBUSTER=${LATEST_COMMIT}",
         "--build-arg",
         f"ADDITIONAL_DEPS={dependencies_str}",
         "-f",
@@ -65,7 +85,7 @@ def docker_run_training(config):
     save_path = check_path_exists(config['save_path'], 'save_path')
     dataset_path = check_path_exists(config['dataset_path'], 'dataset_path')
     training_dir_path = check_path_exists(config['training_dir'], 'training_dir')
-    hook_impl_files = list(training_dir_path.glob('*.py'))
+    hook_impl_files = list(training_dir_path.glob('hook*.py'))
 
     this_dir = Path(__file__).resolve().parent.parent
 
@@ -90,7 +110,7 @@ def docker_run_training(config):
     for impl in hook_impl_files:
         # Start with the base command string:
         cmd_str = (
-            f"cd /workspace && "
+            f"PYTHONPATH=$PYTHONPATH:/training_dir "
             f"poetry run python /workspace/scripts/run_training.py "
             f"/training_dir/{impl.name} "
             f"--save_path /save"
@@ -110,8 +130,8 @@ def docker_run_training(config):
         command = [
             "docker", "run", "-it", "--rm",
             *docker_environment,
-            image_name, "/bin/bash", "-c",
-            cmd_str   # Add the constructed command string here
+            image_name, "/bin/bash", 
+            "-c", cmd_str   # Add the constructed command string here
         ]
         
         process = subprocess.Popen(command)

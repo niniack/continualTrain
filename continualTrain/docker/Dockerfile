@@ -61,6 +61,9 @@ RUN poetry install --no-root --only torch
 # Install the remaining dependencies
 RUN poetry install --no-root --with docker
 
+# Cache busting mechanism based on the latest commit from a GitHub repo
+ARG CACHEBUSTER=undefined
+
 # Install additional dependencies from project
 ARG ADDITIONAL_DEPS
 RUN poetry add $ADDITIONAL_DEPS
