@@ -126,6 +126,10 @@ def docker_run_training(config):
         if 'eval_experiences' in config:
             cmd_str += f" --eval_experiences {config['eval_experiences']}"
 
+        if 'exclude_gpus' in config:
+            gpus_str = ' '.join(map(str, config['exclude_gpus']))
+            cmd_str += f" --exclude_gpus {gpus_str}"
+
         # Construct the full Docker command:
         command = [
             "docker", "run", "-it", "--rm",

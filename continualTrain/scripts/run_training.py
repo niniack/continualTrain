@@ -48,6 +48,9 @@ def parse_args():
     parser.add_argument(
         "--eval_experiences", type=int, help="Number of experiences to evaluate on"
     )
+    parser.add_argument(
+        "--exclude_gpus", nargs="*", type=int, help="The Device IDs of GPUs to exclude"
+    )
     args = parser.parse_args()
     return args
 
@@ -103,10 +106,11 @@ def main():
             attempts=1,
             interval=15,
             verbose=False,
+            excludeID=args.exclude_gpus,
         )
     except RuntimeError as e:
-        print(f"Error obtaining GPU: {e}")
-        deviceID = None
+        sys.exit(f"Error obtaining GPU: {e}")
+
     device = torch.device(f"cuda:{deviceID[0]}" if deviceID is not None else "cpu")
 
     # Verify model can save
