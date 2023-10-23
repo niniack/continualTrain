@@ -53,7 +53,7 @@ ENV PATH="$PATH:$POETRY_HOME/bin"
 RUN poetry config virtualenvs.options.system-site-packages true
 
 # Copy the toml file for continualTrain
-COPY ./pyproject.toml pyproject.toml
+COPY ../pyproject.toml pyproject.toml
 
 # Install the heavy dependencies for continualTrain
 RUN poetry install --no-root --only torch
