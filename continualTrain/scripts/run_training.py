@@ -142,16 +142,6 @@ def main():
         # Set up interactive logging
         loggers = [interactive_logger]
 
-        # Set up wandb logging, if requested
-        if args.use_wandb:
-            run_name = f"{rand_uuid}_seed{model_seed}_{strategy_name}_{dataset_name}"
-            wandb_params = {"entity": wandb_entity, "name": run_name}
-            wandb_logger = WandBLogger(
-                project_name=wandb_project_name,
-                params=wandb_params,
-            )
-            loggers.append(wandb_logger)
-
         # Set up evaluator, which accepts loggers
         eval_plugin = pm.hook.get_evaluator(loggers=loggers)
 
@@ -180,6 +170,25 @@ def main():
             plugins=plugins,
             device=device,
         )
+
+        # Set up wandb logging, if requested
+        if args.use_wandb:
+            run_name = f"{rand_uuid}_seed{model_seed}_{strategy_name}_{dataset_name}"
+            wandb_params = {"entity": wandb_entity, "name": run_name}
+            wandb_config_dict = {
+                "init_lr": optimizer.param_groups[0]["lr"],
+                "minibatch_size": cl_strategy.train_mb_size,
+                "epochs": cl_strategy.train_epochs,
+                "model_seed": model_seed,
+                "gpu_ID": deviceID[0],
+                "model_class": model.__name__,
+            }
+            wandb_logger = WandBLogger(
+                project_name=wandb_project_name,
+                params=wandb_params,
+                config=wandb_config_dict,
+            )
+            loggers.append(wandb_logger)
 
         # Train and test loop
         results = []
