@@ -38,6 +38,12 @@ def parse_args():
         type=toml_file,
         help=help_text,
     )
+    parser.add_argument(
+        "-it",
+        "--interactive",
+        action="store_true",
+        help="Run the Docker container in interactive mode.",
+    )
     args = parser.parse_args()
     return args
 
@@ -80,7 +86,7 @@ def build_docker_image(config):
 
 
 # fmt: off
-def docker_run_training(config):
+def docker_run_training(config, run_interactive):
     
     save_path = check_path_exists(config['save_path'], 'save_path')
     dataset_path = check_path_exists(config['dataset_path'], 'dataset_path')
@@ -131,8 +137,9 @@ def docker_run_training(config):
             cmd_str += f" --exclude_gpus {gpus_str}"
 
         # Construct the full Docker command:
+        mode = "-it" if run_interactive else "-d"
         command = [
-            "docker", "run", "-it", "--rm",
+            "docker", "run", "-d", "--rm",
             *docker_environment,
             image_name, "/bin/bash", 
             "-c", cmd_str   # Add the constructed command string here
@@ -151,7 +158,7 @@ def main():
     args = parse_args()
     config = read_toml_config(args.training_config)
     build_docker_image(config)
-    docker_run_training(config)
+    docker_run_training(config, args.interactive)
 
 
 if __name__ == "__main__":
