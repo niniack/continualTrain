@@ -185,6 +185,7 @@ def main():
                 "gpu_ID": deviceID[0],
                 "model_class": type(model).__name__,
                 "optimizer_type": type(optimizer).__name__,
+                "experiences": int(dataset.n_experiences),
             }
             for key, value in optimizer.defaults.items():
                 wandb_config_dict[f"optimizer_{key}"] = value
