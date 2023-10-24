@@ -139,7 +139,7 @@ def docker_run_training(config, run_interactive):
         # Construct the full Docker command:
         mode = "-it" if run_interactive else "-d"
         command = [
-            "docker", "run", "-d", "--rm",
+            "docker", "run", mode, "--rm",
             *docker_environment,
             image_name, "/bin/bash", 
             "-c", cmd_str   # Add the constructed command string here
