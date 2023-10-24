@@ -183,7 +183,7 @@ def main():
                 "epochs": cl_strategy.train_epochs,
                 "model_seed": model_seed,
                 "gpu_ID": deviceID[0],
-                "model_class": model.__name__,
+                "model_class": type(model).__name__,
                 "optimizer_type": type(optimizer).__name__,
             }
             for key, value in optimizer.defaults.items():
