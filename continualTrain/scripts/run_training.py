@@ -175,6 +175,8 @@ def main():
         if args.use_wandb:
             run_name = f"{rand_uuid}_seed{model_seed}_{strategy_name}_{dataset_name}"
             wandb_params = {"entity": wandb_entity, "name": run_name}
+
+            # Extract and log common hyperparameters
             wandb_config_dict = {
                 "init_lr": optimizer.param_groups[0]["lr"],
                 "minibatch_size": cl_strategy.train_mb_size,
@@ -182,12 +184,17 @@ def main():
                 "model_seed": model_seed,
                 "gpu_ID": deviceID[0],
                 "model_class": model.__name__,
+                "optimizer_type": type(optimizer).__name__,
             }
+            for key, value in optimizer.defaults.items():
+                wandb_config_dict[f"optimizer_{key}"] = value
+
             wandb_logger = WandBLogger(
                 project_name=wandb_project_name,
                 params=wandb_params,
                 config=wandb_config_dict,
             )
+
             loggers.append(wandb_logger)
 
         # Train and test loop
