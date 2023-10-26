@@ -165,7 +165,11 @@ def main():
         scheduler, granularity = pm.hook.get_scheduler(optimizer=optimizer)
 
         if scheduler:
-            plugins.append(LRSchedulerPlugin(scheduler, step_granularity=granularity))
+            plugins.append(
+                LRSchedulerPlugin(
+                    scheduler, reset_scheduler=True, step_granularity=granularity
+                )
+            )
 
         # Training strategy
         cl_strategy = pm.hook.get_strategy(
@@ -225,6 +229,7 @@ def main():
                 print("Current Classes: ", experience.classes_in_this_experience)
                 cl_strategy.train(experience)
                 print("Training completed")
+                # LR Scheduler: reset here
 
                 # Invoke strategy evaluation method
                 print("Evaluating experiences")
