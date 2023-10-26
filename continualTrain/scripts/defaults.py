@@ -14,6 +14,11 @@ def get_optimizer(parameters):
 
 
 @hookimpl
+def get_scheduler(optimizer):
+    return None
+
+
+@hookimpl
 def get_criterion():
     loss = CrossEntropyLoss()
     return loss

@@ -11,7 +11,7 @@ import spec
 import torch
 from avalanche.evaluation.metrics import accuracy_metrics
 from avalanche.logging import InteractiveLogger, WandBLogger
-from avalanche.training.plugins import EvaluationPlugin
+from avalanche.training.plugins import EvaluationPlugin, LRSchedulerPlugin
 from avalanche.training.supervised.joint_training import JointTraining
 from utils import (
     DS_SEED,
@@ -148,10 +148,6 @@ def main():
         # Model from plugin manager
         model = pm.hook.get_model(device=device, seed=model_seed)
 
-        # Training configuration
-        optimizer = pm.hook.get_optimizer(parameters=model.parameters())
-        criterion = pm.hook.get_criterion()
-
         # Set up Avalanche strategy plugins
         model_saver_plugin = ModelSaverPlugin(
             save_frequency=10,
@@ -160,6 +156,16 @@ def main():
             save_path=args.save_path,
         )
         plugins = [model_saver_plugin]
+
+        # Criterion for training
+        criterion = pm.hook.get_criterion()
+
+        # Optimizer and scheduling
+        optimizer = pm.hook.get_optimizer(parameters=model.parameters())
+        scheduler = pm.hook.get_scheduler(optimizer=optimizer)
+
+        if scheduler:
+            plugins.append(LRSchedulerPlugin(scheduler, step_granularity="iteration"))
 
         # Training strategy
         cl_strategy = pm.hook.get_strategy(

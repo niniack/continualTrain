@@ -1,8 +1,9 @@
-from typing import List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import pluggy
 from avalanche.training.plugins import EvaluationPlugin
 from torch.nn import Module
+from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import Dataset
 
@@ -60,6 +61,16 @@ def get_optimizer(parameters: Union[List, Tuple]) -> Optimizer:
 
     :param parameters: Model parameters to be optimized.
     :return: An optimizer object.
+    """
+
+
+@hookspec(firstresult=True)
+def get_scheduler(optimizer: Union[Optimizer, None]) -> Optional[_LRScheduler]:
+    """
+    Constructs and retrieves a scheduler
+
+    :param parameters: Torch optimizer
+    :return: A Torch scheduler
     """
 
 
