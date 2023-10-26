@@ -162,10 +162,10 @@ def main():
 
         # Optimizer and scheduling
         optimizer = pm.hook.get_optimizer(parameters=model.parameters())
-        scheduler = pm.hook.get_scheduler(optimizer=optimizer)
+        scheduler, granularity = pm.hook.get_scheduler(optimizer=optimizer)
 
         if scheduler:
-            plugins.append(LRSchedulerPlugin(scheduler, step_granularity="iteration"))
+            plugins.append(LRSchedulerPlugin(scheduler, step_granularity=granularity))
 
         # Training strategy
         cl_strategy = pm.hook.get_strategy(

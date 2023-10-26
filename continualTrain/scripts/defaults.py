@@ -15,7 +15,7 @@ def get_optimizer(parameters):
 
 @hookimpl
 def get_scheduler(optimizer):
-    return None
+    return (None, None)
 
 
 @hookimpl

@@ -65,12 +65,14 @@ def get_optimizer(parameters: Union[List, Tuple]) -> Optimizer:
 
 
 @hookspec(firstresult=True)
-def get_scheduler(optimizer: Union[Optimizer, None]) -> Optional[_LRScheduler]:
+def get_scheduler(
+    optimizer: Union[Optimizer, None]
+) -> Tuple[Optional[_LRScheduler], Optional[bool]]:
     """
     Constructs and retrieves a scheduler
 
     :param parameters: Torch optimizer
-    :return: A Torch scheduler
+    :return: A tuple of Torch scheduler and step granularity ("iteration" or "epoch")
     """
 
 
