@@ -224,7 +224,6 @@ def main():
                 # Invoke strategy train method
                 print("Start of experience: ", experience.current_experience)
                 print("Current Classes: ", experience.classes_in_this_experience)
-                num_samples = len(experience.dataset)
 
                 cl_strategy.train(experience)
                 print("Training completed")
