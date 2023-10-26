@@ -1,7 +1,7 @@
 from typing import Any, List, Optional, Tuple, Union
 
 import pluggy
-from avalanche.training.plugins import EvaluationPlugin
+from avalanche.training.plugins import EvaluationPlugin, LRSchedulerPlugin
 from torch.nn import Module
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
@@ -65,14 +65,12 @@ def get_optimizer(parameters: Union[List, Tuple]) -> Optimizer:
 
 
 @hookspec(firstresult=True)
-def get_scheduler(
-    optimizer: Union[Optimizer, None]
-) -> Tuple[Optional[_LRScheduler], Optional[bool]]:
+def get_scheduler(optimizer: Union[Optimizer, None]) -> Optional[LRSchedulerPlugin]:
     """
     Constructs and retrieves a scheduler
 
     :param parameters: Torch optimizer
-    :return: A tuple of Torch scheduler and step granularity ("iteration" or "epoch")
+    :return: Avalanche LR Scheduler
     """
 
 

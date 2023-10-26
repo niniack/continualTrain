@@ -162,14 +162,11 @@ def main():
 
         # Optimizer and scheduling
         optimizer = pm.hook.get_optimizer(parameters=model.parameters())
-        scheduler, granularity = pm.hook.get_scheduler(optimizer=optimizer)
+        scheduler = pm.hook.get_scheduler(optimizer=optimizer)
 
+        # Add LR scheduler to plugins, if it exists
         if scheduler:
-            plugins.append(
-                LRSchedulerPlugin(
-                    scheduler, reset_scheduler=True, step_granularity=granularity
-                )
-            )
+            plugins.append(scheduler)
 
         # Training strategy
         cl_strategy = pm.hook.get_strategy(
@@ -227,9 +224,11 @@ def main():
                 # Invoke strategy train method
                 print("Start of experience: ", experience.current_experience)
                 print("Current Classes: ", experience.classes_in_this_experience)
+                num_samples = len(experience.dataset)
+
                 cl_strategy.train(experience)
                 print("Training completed")
-                # LR Scheduler: reset here
+                # LR Scheduler will reset here
 
                 # Invoke strategy evaluation method
                 print("Evaluating experiences")
