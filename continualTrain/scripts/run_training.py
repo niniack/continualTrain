@@ -6,6 +6,7 @@ import sys
 import defaults
 import GPUtil
 import pluggy
+import profiler
 import shortuuid
 import spec
 import torch
@@ -13,6 +14,7 @@ from avalanche.evaluation.metrics import accuracy_metrics
 from avalanche.logging import InteractiveLogger, WandBLogger
 from avalanche.training.plugins import EvaluationPlugin, LRSchedulerPlugin
 from avalanche.training.supervised.joint_training import JointTraining
+from torch.profiler import profile, record_function
 from utils import (
     DS_SEED,
     MODEL_SEEDS,
@@ -50,6 +52,9 @@ def parse_args():
     )
     parser.add_argument(
         "--exclude_gpus", nargs="*", type=int, help="The Device IDs of GPUs to exclude"
+    )
+    parser.add_argument(
+        "--profile", action="store_true", help="Profile the main training loop."
     )
     args = parser.parse_args()
     return args
@@ -120,6 +125,7 @@ def main():
         del temp_model  # cleanup
         sys.exit(1)  # exit the program with an error code
     del temp_model
+    torch.cuda.empty_cache()
 
     # Set up printing locally
     interactive_logger = InteractiveLogger()
@@ -207,41 +213,50 @@ def main():
 
         # Train and test loop
         results = []
-
-        if isinstance(cl_strategy, JointTraining):
-            cl_strategy.train(train_stream)
-            results.append(cl_strategy.eval(test_stream))
-            save_name = generate_model_save_name(
-                save_path=args.save_path,
-                strategy=strategy_name,
-                rand_uuid=rand_uuid,
-                experience=0,
-                epoch=cl_strategy.train_epochs,
-            )
-            model.save_weights(save_name)
-        else:
-            for i, experience in enumerate(train_stream):
-                # Invoke strategy train method
-                print("Start of experience: ", experience.current_experience)
-                print("Current Classes: ", experience.classes_in_this_experience)
-
-                cl_strategy.train(experience)
-                print("Training completed")
-                # LR Scheduler will reset here
-
-                # Invoke strategy evaluation method
-                print("Evaluating experiences")
+        with profiler.conditional_profiler(
+            args.profile,
+            activities=[
+                torch.profiler.ProfilerActivity.CPU,
+                torch.profiler.ProfilerActivity.CUDA,
+            ],
+            record_shapes=True,
+        ) as prof:
+            if isinstance(cl_strategy, JointTraining):
+                cl_strategy.train(train_stream)
                 results.append(cl_strategy.eval(test_stream))
-
-                # Save model
                 save_name = generate_model_save_name(
                     save_path=args.save_path,
                     strategy=strategy_name,
                     rand_uuid=rand_uuid,
-                    experience=i,
+                    experience=0,
                     epoch=cl_strategy.train_epochs,
                 )
                 model.save_weights(save_name)
+            else:
+                for i, experience in enumerate(train_stream):
+                    # Invoke strategy train method
+                    print("Start of experience: ", experience.current_experience)
+                    print("Current Classes: ", experience.classes_in_this_experience)
+
+                    cl_strategy.train(experience)
+                    print("Training completed")
+                    # LR Scheduler will reset here
+
+                    # Invoke strategy evaluation method
+                    print("Evaluating experiences")
+                    results.append(cl_strategy.eval(test_stream))
+
+                    # Save model
+                    save_name = generate_model_save_name(
+                        save_path=args.save_path,
+                        strategy=strategy_name,
+                        rand_uuid=rand_uuid,
+                        experience=i,
+                        epoch=cl_strategy.train_epochs,
+                    )
+                    model.save_weights(save_name)
+
+        profiler.print_profiler_results(prof)
 
         if args.use_wandb:
             wandb_logger.wandb.finish()

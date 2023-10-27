@@ -44,6 +44,12 @@ def parse_args():
         action="store_true",
         help="Run the Docker container in interactive mode.",
     )
+    parser.add_argument(
+        "-p",
+        "--profile",
+        action="store_true",
+        help="Profile the main training loop.",
+    )
     args = parser.parse_args()
     return args
 
@@ -86,7 +92,7 @@ def build_docker_image(config):
 
 
 # fmt: off
-def docker_run_training(config, run_interactive):
+def docker_run_training(config, run_interactive, run_profiler):
     
     save_path = check_path_exists(config['save_path'], 'save_path')
     dataset_path = check_path_exists(config['dataset_path'], 'dataset_path')
@@ -135,6 +141,9 @@ def docker_run_training(config, run_interactive):
         if 'exclude_gpus' in config:
             gpus_str = ' '.join(map(str, config['exclude_gpus']))
             cmd_str += f" --exclude_gpus {gpus_str}"
+        
+        if run_profiler:
+            cmd_str += f" --profile"
 
         # Construct the full Docker command:
         mode = "-it" if run_interactive else "-d"
@@ -158,7 +167,7 @@ def main():
     args = parse_args()
     config = read_toml_config(args.training_config)
     build_docker_image(config)
-    docker_run_training(config, args.interactive)
+    docker_run_training(config, args.interactive, args.profile)
 
 
 if __name__ == "__main__":
