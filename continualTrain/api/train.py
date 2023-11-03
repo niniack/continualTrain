@@ -118,6 +118,10 @@ def docker_run_training(config, run_interactive, run_profiler):
         "-v", f"{dataset_path}:/datasets",  
     ]
 
+    # Optionally add CUDA_LAUNCH_BLOCKING if it's set in the config
+    if 'cuda_debug' in config and config['cuda_debug']:
+        docker_environment.extend(["-e", f"CUDA_LAUNCH_BLOCKING={config['cuda_debug']}"])
+
     # Now, start the training processes for each hook implementation
     for impl in hook_impl_files:
         # Start with the base command string:

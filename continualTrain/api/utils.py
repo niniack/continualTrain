@@ -16,6 +16,7 @@ OPTIONAL_KEYS = [
     "train_experiences",
     "eval_experiences",
     "exclude_gpus",
+    "cuda_debug",
 ]
 
 
