@@ -50,6 +50,12 @@ def parse_args():
         action="store_true",
         help="Profile the main training loop.",
     )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        action="store_true",
+        help="Debug the train container.",
+    )
     args = parser.parse_args()
     return args
 
@@ -92,7 +98,7 @@ def build_docker_image(config):
 
 
 # fmt: off
-def docker_run_training(config, run_interactive, run_profiler):
+def docker_run_training(config, run_interactive, run_profiler, run_debug):
     
     save_path = check_path_exists(config['save_path'], 'save_path')
     dataset_path = check_path_exists(config['dataset_path'], 'dataset_path')
@@ -150,12 +156,12 @@ def docker_run_training(config, run_interactive, run_profiler):
             cmd_str += f" --profile"
 
         # Construct the full Docker command:
-        mode = "-it" if run_interactive else "-d"
+        mode = "-it" if (run_interactive or run_debug) else "-d"
         command = [
             "docker", "run", mode, "--rm",
             *docker_environment,
-            image_name, "/bin/bash", 
-            "-c", cmd_str   # Add the constructed command string here
+            image_name,
+            *(["/bin/bash"] if run_debug else ["/bin/bash", "-c", cmd_str])
         ]
         
         process = subprocess.Popen(command)
@@ -171,7 +177,7 @@ def main():
     args = parse_args()
     config = read_toml_config(args.training_config)
     build_docker_image(config)
-    docker_run_training(config, args.interactive, args.profile)
+    docker_run_training(config, args.interactive, args.profile, args.debug)
 
 
 if __name__ == "__main__":
