@@ -238,7 +238,7 @@ def main():
                     print("Start of experience: ", experience.current_experience)
                     print("Current Classes: ", experience.classes_in_this_experience)
 
-                    cl_strategy.train(experience, num_workers=32)
+                    cl_strategy.train(experience)
                     print("Training completed")
                     # LR Scheduler will reset here
 
