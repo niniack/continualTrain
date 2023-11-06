@@ -243,12 +243,17 @@ def main():
                 model.save_weights(save_name)
             else:
                 for i, experience in enumerate(train_stream):
+                    # Get val exp, if exists
+                    if val_stream is not None:
+                        val_exp = next(val_stream, None)
+
                     # Invoke strategy train method
                     print("Start of experience: ", experience.current_experience)
                     print("Current Classes: ", experience.classes_in_this_experience)
 
                     cl_strategy.train(
-                        experience, eval_streams=[val_stream] if val_stream else []
+                        experience,
+                        eval_streams=[val_exp] if val_stream is not None else [],
                     )
                     print("Training completed")
                     # LR Scheduler will reset here
