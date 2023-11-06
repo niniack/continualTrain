@@ -146,12 +146,13 @@ def main():
     # Defaults to none
     val_stream = None
     if hasattr(dataset, "val_stream"):
-        print("No validation set!")
         val_stream = (
             dataset.val_stream[: int(args.train_experiences)]
             if hasattr(args, "train_experiences")
             else dataset.val_stream
         )
+    else:
+        print("No validation set!")
 
     # TRAINING
     for model_seed in MODEL_SEEDS:
