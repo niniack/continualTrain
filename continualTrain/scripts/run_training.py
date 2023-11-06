@@ -143,6 +143,15 @@ def main():
         else dataset.test_stream
     )
 
+    # Defaults to none
+    val_stream = None
+    if dataset.val_stream:
+        val_stream = (
+            dataset.val_stream[: int(args.train_experiences)]
+            if hasattr(args, "train_experiences")
+            else dataset.val_stream
+        )
+
     # TRAINING
     for model_seed in MODEL_SEEDS:
         # Set up interactive logging
@@ -238,7 +247,9 @@ def main():
                     print("Start of experience: ", experience.current_experience)
                     print("Current Classes: ", experience.classes_in_this_experience)
 
-                    cl_strategy.train(experience)
+                    cl_strategy.train(
+                        experience, eval_streams=[val_stream] if val_stream else []
+                    )
                     print("Training completed")
                     # LR Scheduler will reset here
 
