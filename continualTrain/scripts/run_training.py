@@ -145,7 +145,7 @@ def main():
 
     # Defaults to none
     val_stream = None
-    if dataset.val_stream:
+    if hasattr(dataset, "val_stream"):
         val_stream = (
             dataset.val_stream[: int(args.train_experiences)]
             if hasattr(args, "train_experiences")
