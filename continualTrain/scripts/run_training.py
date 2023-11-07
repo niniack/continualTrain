@@ -106,9 +106,9 @@ def main():
     try:
         deviceID = GPUtil.getFirstAvailable(
             order="memory",
-            maxLoad=0.85,
+            maxLoad=0.3,
             maxMemory=0.85,
-            attempts=1,
+            attempts=5,
             interval=15,
             verbose=False,
             excludeID=args.exclude_gpus,
