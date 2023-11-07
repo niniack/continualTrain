@@ -249,10 +249,11 @@ def main():
                 )
                 model.save_weights(save_name)
             else:
+                val_stream_iter = iter(val_stream) if val_stream is not None else None
                 for i, experience in enumerate(train_stream):
                     # Get val exp, if exists
                     if val_stream is not None:
-                        val_exp = next(iter(val_stream), None)
+                        val_exp = next(iter(val_stream_iter), None)
 
                     # Invoke strategy train method
                     print("Start of experience: ", experience.current_experience)
