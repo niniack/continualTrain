@@ -3,8 +3,14 @@ from avalanche.evaluation.metrics import accuracy_metrics
 from avalanche.training.plugins import EvaluationPlugin
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
+from torch.utils.data import default_collate
 
 hookimpl = pluggy.HookimplMarker("continualTrain")
+
+
+@hookimpl
+def get_collate():
+    return default_collate
 
 
 @hookimpl

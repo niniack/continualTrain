@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import pluggy
 from avalanche.training.plugins import EvaluationPlugin, LRSchedulerPlugin
@@ -8,6 +8,13 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data import Dataset
 
 hookspec = pluggy.HookspecMarker("continualTrain")
+
+
+@hookspec(firstresult=True)
+def get_collate() -> Callable:
+    """
+    Retrieves the collate fn for each experience.
+    """
 
 
 @hookspec(firstresult=True)

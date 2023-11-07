@@ -154,6 +154,9 @@ def main():
     else:
         print("No validation set!")
 
+    # Collate function
+    collate_fn = pm.hook.get_collate()
+
     # TRAINING
     for model_seed in MODEL_SEEDS:
         # Set up interactive logging
@@ -259,6 +262,7 @@ def main():
                         experience,
                         eval_streams=[val_exp] if val_stream is not None else [],
                         num_workers=16,
+                        collate_fn=collate_fn,
                     )
                     print("Training completed")
                     # LR Scheduler will reset here
