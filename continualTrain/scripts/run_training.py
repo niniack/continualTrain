@@ -256,6 +256,7 @@ def main():
                     cl_strategy.train(
                         experience,
                         eval_streams=[val_exp] if val_stream is not None else [],
+                        num_workers=16,
                     )
                     print("Training completed")
                     # LR Scheduler will reset here
