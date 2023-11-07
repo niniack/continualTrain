@@ -106,12 +106,12 @@ def main():
     try:
         deviceID = GPUtil.getFirstAvailable(
             order="memory",
-            maxLoad=0,
+            maxLoad=100,
             maxMemory=0.85,
             attempts=5,
-            interval=15,
+            interval=5,
             verbose=False,
-            excludeID=args.exclude_gpus,
+            excludeID=[],
         )
     except RuntimeError as e:
         sys.exit(f"Error obtaining GPU: {e}")
