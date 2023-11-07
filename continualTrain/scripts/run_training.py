@@ -106,7 +106,7 @@ def main():
     try:
         deviceID = GPUtil.getFirstAvailable(
             order="memory",
-            maxLoad=0.3,
+            maxLoad=0,
             maxMemory=0.85,
             attempts=5,
             interval=15,
