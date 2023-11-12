@@ -5,3 +5,4 @@ wandb
 __pycache__
 *.env
 parse_config.py
+*.def

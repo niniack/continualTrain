@@ -1,7 +1,15 @@
 import argparse
+from enum import Enum
 from pathlib import Path
 
+import requests
 import toml
+
+
+class ContainerTool(str, Enum):
+    docker = "docker"
+    singularity = "singularity"
+
 
 REQUIRED_KEYS = [
     "save_path",
@@ -20,6 +28,19 @@ OPTIONAL_KEYS = [
 ]
 
 
+def get_latest_commit_sha(repo_url, branch="master"):
+    # Extract repo details from the URL
+    user, repo = repo_url.split("/")[-2:]
+
+    # GitHub API endpoint to get the latest commit SHA for the specified branch
+    api_url = f"https://api.github.com/repos/{user}/{repo}/commits/{branch}"
+
+    response = requests.get(api_url)
+    response.raise_for_status()  # Ensure we got a successful response
+
+    return response.json()["sha"]
+
+
 def toml_file(file_path):
     if not file_path.endswith(".toml"):
         raise argparse.ArgumentTypeError(
@@ -28,7 +49,7 @@ def toml_file(file_path):
     return file_path
 
 
-def read_toml_config(file_path):
+def read_toml_config(file_path: Path) -> dict:
     with open(file_path, "r") as file:
         config = toml.load(file)
 

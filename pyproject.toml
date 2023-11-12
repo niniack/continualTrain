@@ -15,6 +15,8 @@ build-backend = "poetry.core.masonry.api"
 python = ">=3.8,<3.11"
 toml = { version = "*"}
 requests = { version = "*"}
+spython = { version = "*"}
+typer = {version = "*", extras = ["all"]}
 
 [tool.poetry.group.torch]
 optional = true
@@ -33,10 +35,11 @@ GPUtil = { version = "*"}
 pluggy = { version = "*"}
 shortuuid = { version = "*"}
 natsort = { version = "*"}
+protobuf = { version = "3.20.*"}
 continualUtils = { git = "https://github.com/niniack/continualUtils.git", branch = "dev"}
 
 [tool.poetry.scripts]
-continual_train = "continualTrain.api.train:main"
+barracks = "continualTrain.api.entry:app"
 
 [[tool.poetry.source]]
 name = "torch"
