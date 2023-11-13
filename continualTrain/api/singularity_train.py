@@ -47,7 +47,7 @@ def singularity_run_training(
     bind_paths = f"{this_dir}:/workspace,{training_dir_path}:/training_dir,{os.getenv('HOME')}/.ssh:/root/.ssh,{save_path}:/save,{dataset_path}:/datasets"
 
     # Optionally add CUDA_LAUNCH_BLOCKING if it's set in the config
-    if "cuda_debug" in config and config["cuda_debug"]:
+    if "enable_cuda_debug" in config and config["enable_cuda_debug"]:
         environment += ",CUDA_LAUNCH_BLOCKING=1"
 
     # Now, start the training processes for each hook implementation
@@ -61,7 +61,7 @@ def singularity_run_training(
         )
 
         # Add optional arguments to the command string:
-        if config.get("wandb_enable_logging", True):
+        if config.get("enable_wandb_logging", True):
             cmd_str += " --use_wandb"
 
         if "train_experiences" in config:
@@ -70,8 +70,8 @@ def singularity_run_training(
         if "eval_experiences" in config:
             cmd_str += f" --eval_experiences {config['eval_experiences']}"
 
-        if "exclude_gpus" in config:
-            gpus_str = " ".join(map(str, config["exclude_gpus"]))
+        if "exclude_gpus_list" in config:
+            gpus_str = " ".join(map(str, config["exclude_gpus_list"]))
             cmd_str += f" --exclude_gpus {gpus_str}"
 
         if run_profiler:

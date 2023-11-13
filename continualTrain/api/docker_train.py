@@ -41,7 +41,7 @@ def docker_run_training(config, image_name, run_interactive, run_profiler, run_d
     ]
 
     # Optionally add CUDA_LAUNCH_BLOCKING if it's set in the config
-    if "cuda_debug" in config and config["cuda_debug"]:
+    if "enable_cuda_debug" in config and config["enable_cuda_debug"]:
         docker_environment.extend(["-e", "CUDA_LAUNCH_BLOCKING=1"])
 
     # Now, start the training processes for each hook implementation
@@ -55,7 +55,7 @@ def docker_run_training(config, image_name, run_interactive, run_profiler, run_d
         )
 
         # Add optional arguments to the command string:
-        if config.get("wandb_enable_logging", True):
+        if config.get("enable_wandb_logging", True):
             cmd_str += " --use_wandb"
 
         if "train_experiences" in config:
@@ -64,8 +64,8 @@ def docker_run_training(config, image_name, run_interactive, run_profiler, run_d
         if "eval_experiences" in config:
             cmd_str += f" --eval_experiences {config['eval_experiences']}"
 
-        if "exclude_gpus" in config:
-            gpus_str = " ".join(map(str, config["exclude_gpus"]))
+        if "exclude_gpus_list" in config:
+            gpus_str = " ".join(map(str, config["exclude_gpus_list"]))
             cmd_str += f" --exclude_gpus {gpus_str}"
 
         if run_profiler:

@@ -1,19 +1,58 @@
 from pathlib import Path
 
+import toml
 import typer
+from rich import print
 from typing_extensions import Annotated
 
 from continualTrain.api import singularity_train
 from continualTrain.api.docker_build import build_docker_image
 from continualTrain.api.docker_train import docker_run_training
 from continualTrain.api.singularity_train import singularity_run_training
-from continualTrain.api.utils import ContainerTool, read_toml_config
+from continualTrain.api.utils import (
+    OPTIONAL_KEYS,
+    REQUIRED_KEYS,
+    ContainerTool,
+    read_toml_config,
+)
 
 app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
+
+
+@app.command()
+def initialize(
+    config_path: Annotated[
+        Path,
+        typer.Argument(
+            exists=False,
+            file_okay=False,
+            dir_okay=True,
+            writable=True,
+            readable=True,
+            resolve_path=True,
+        ),
+    ]
+):
+    """Initialize an empty configuration file"""
+    config_file = Path(config_path, "training.toml")
+
+    if config_file.is_file():
+        print(
+            "[bold red]There already exists a training.toml configuration file."
+            " Please delete the file and initialize again."
+            " This command will not overwrite an existing file.\n"
+        )
+    else:
+        config_dict = {
+            key: "false" if "enable" in key else [] if "list" in key else ""
+            for key in REQUIRED_KEYS + OPTIONAL_KEYS
+        }
+        with config_file.open("w", encoding="utf-8") as cf:
+            toml.dump(config_dict, cf)
 
 
 @app.command()
@@ -38,7 +77,7 @@ def build(
 
     parsed_config = read_toml_config(config)
     build_docker_image(
-        add_deps=parsed_config["dependencies"], image_name=image_name, push=push
+        add_deps=parsed_config["dependencies_list"], image_name=image_name, push=push
     )
 
 

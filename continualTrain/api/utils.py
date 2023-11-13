@@ -15,16 +15,16 @@ REQUIRED_KEYS = [
     "save_path",
     "dataset_path",
     "training_dir",
-    "wandb_enable_logging",
+    "enable_wandb_logging",
     "wandb_api_key",
 ]
 
 OPTIONAL_KEYS = [
-    "dependencies",
+    "dependencies_list",
     "train_experiences",
     "eval_experiences",
-    "exclude_gpus",
-    "cuda_debug",
+    "exclude_gpus_list",
+    "enable_cuda_debug",
 ]
 
 
@@ -60,15 +60,17 @@ def read_toml_config(file_path: Path) -> dict:
             "Missing required keys in the TOML configuration: {', '.join(missing_keys)}"
         )
 
-    # Verify that 'exclude_gpus' is a list of integers formatted as "[x,y,z]"
-    if "exclude_gpus" in config:
-        if not isinstance(config["exclude_gpus"], list):
-            raise ValueError("'exclude_gpus' must be a list in the TOML configuration.")
+    # Verify that 'exclude_gpus_list' is a list of integers formatted as "[x,y,z]"
+    if "exclude_gpus_list" in config:
+        if not isinstance(config["exclude_gpus_list"], list):
+            raise ValueError(
+                "'exclude_gpus_list' must be a list in the TOML configuration."
+            )
 
-        for gpu in config["exclude_gpus"]:
+        for gpu in config["exclude_gpus_list"]:
             if not isinstance(gpu, int):
                 raise ValueError(
-                    f"Invalid value in 'exclude_gpus'. Expected all values to be integers, but found {gpu} of type {type(gpu).__name__}."
+                    f"Invalid value in 'exclude_gpus_list'. Expected all values to be integers, but found {gpu} of type {type(gpu).__name__}."
                 )
 
     return config
