@@ -1,6 +1,8 @@
 import subprocess
 from pathlib import Path
 
+from rich import print
+
 from continualTrain.api.utils import get_latest_commit_sha
 
 

@@ -34,6 +34,7 @@ def initialize(
             writable=True,
             readable=True,
             resolve_path=True,
+            help="Directory where training.toml configuration file will be initialized",
         ),
     ]
 ):
@@ -67,6 +68,7 @@ def build(
             writable=False,
             readable=True,
             resolve_path=True,
+            help="Path to training.toml configuration file",
         ),
     ],
     push: Annotated[
@@ -93,6 +95,7 @@ def train(
             writable=False,
             readable=True,
             resolve_path=True,
+            help="Path to training.toml configuration file",
         ),
     ],
     tool: Annotated[

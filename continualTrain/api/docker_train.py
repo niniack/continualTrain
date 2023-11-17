@@ -2,6 +2,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from rich import print
+
 from continualTrain.api.utils import check_path_exists
 
 

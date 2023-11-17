@@ -2,6 +2,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from rich import print
+
 from continualTrain.api.utils import check_path_exists
 
 
@@ -34,6 +36,7 @@ def singularity_run_training(
     save_path = check_path_exists(config["save_path"], "save_path")
     dataset_path = check_path_exists(config["dataset_path"], "dataset_path")
     training_dir_path = check_path_exists(config["training_dir"], "training_dir")
+    overlays_list = config["overlays_list"]
     hook_impl_files = list(training_dir_path.glob("hook*.py"))
 
     this_dir = Path(__file__).resolve().parent.parent
@@ -97,11 +100,15 @@ def singularity_run_training(
             environment,
             "--bind",
             bind_paths,
+            *[
+                item
+                for overlay in overlays_list
+                for item in ["--overlay", str(overlay)]
+            ],
             f"{Path.home()}/.singularity/{image_name.split('/')[-1]}.sif",
             *shell,
         ]
 
-        print(cmd_str)
         process = subprocess.Popen(command)
         processes.append(process)
 

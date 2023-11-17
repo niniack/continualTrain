@@ -4,6 +4,7 @@ from pathlib import Path
 
 import requests
 import toml
+from rich import print
 
 
 class ContainerTool(str, Enum):
@@ -25,6 +26,7 @@ OPTIONAL_KEYS = [
     "eval_experiences",
     "exclude_gpus_list",
     "enable_cuda_debug",
+    "overlays_list",
 ]
 
 
