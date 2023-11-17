@@ -38,6 +38,8 @@ def singularity_run_training(
     training_dir_path = check_path_exists(config["training_dir"], "training_dir")
     if "overlays_list" in config:
         overlays_list = config["overlays_list"]
+    else:
+        overlays_list = None
     hook_impl_files = list(training_dir_path.glob("hook*.py"))
 
     this_dir = Path(__file__).resolve().parent.parent
@@ -101,11 +103,15 @@ def singularity_run_training(
             environment,
             "--bind",
             bind_paths,
-            *[
-                item
-                for overlay in overlays_list
-                for item in ["--overlay", str(overlay)]
-            ],
+            *(
+                [
+                    item
+                    for overlay in overlays_list
+                    for item in ["--overlay", str(overlay)]
+                ]
+                if overlays_list is not None
+                else []
+            ),
             f"{Path.home()}/.singularity/{image_name.split('/')[-1]}.sif",
             *shell,
         ]
