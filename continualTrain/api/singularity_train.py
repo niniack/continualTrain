@@ -36,7 +36,7 @@ def singularity_run_training(
     save_path = check_path_exists(config["save_path"], "save_path")
     dataset_path = check_path_exists(config["dataset_path"], "dataset_path")
     training_dir_path = check_path_exists(config["training_dir"], "training_dir")
-    if overlays_list in config:
+    if "overlays_list" in config:
         overlays_list = config["overlays_list"]
     hook_impl_files = list(training_dir_path.glob("hook*.py"))
 
