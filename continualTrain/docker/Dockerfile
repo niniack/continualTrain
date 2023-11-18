@@ -73,4 +73,10 @@ ARG CACHEBUSTER=undefined
 
 # Install additional dependencies from project
 ARG ADDITIONAL_DEPS
-RUN poetry add $ADDITIONAL_DEPS
+ARG GIT_DEPS
+
+# Add non-git repositories
+RUN if [ -n "$ADDITIONAL_DEPS" ] ; then poetry add $ADDITIONAL_DEPS ; fi
+
+# Add git repositories
+RUN if [ -n "$GIT_DEPS" ] ; then for dep in $GIT_DEPS; do poetry add $dep; done ; fi
