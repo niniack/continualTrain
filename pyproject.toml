@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "continualtrain"
+name = "continual_train"
 version = "0.0.0"
 description = "Train CL models in a Docker container"
 authors = ["Nishant S. Aswani <nishantaswani@nyu.edu>"]
@@ -22,9 +22,9 @@ typer = {version = "*", extras = ["all"]}
 optional = true
 
 [tool.poetry.group.torch.dependencies]
-torch = {version = ">=2.1.0", source = "torch"}
-torchvision = {version = "*", source = "torch"}
-torchaudio = {version = "*", source = "torch"}
+torch = {version = ">=2.1.0", source = "torch", allow-prereleases = true}
+torchvision = {version = "*", source = "torch", allow-prereleases = true}
+torchaudio = {version = "*", source = "torch", allow-prereleases = true}
 
 [tool.poetry.group.docker]
 optional = true

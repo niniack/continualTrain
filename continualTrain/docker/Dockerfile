@@ -52,15 +52,21 @@ ENV PATH="$PATH:$POETRY_HOME/bin"
 # But that is currently broken for OPTIONS
 RUN poetry config virtualenvs.options.system-site-packages true
 
+COPY poetry.lock poetry.lock
+
 # Copy the toml file for continualTrain 
 # Build context is the repo root
 COPY pyproject.toml pyproject.toml
 
 # Install the heavy dependencies for continualTrain
-RUN poetry install --no-root --only torch
+RUN --mount=type=cache,target=~/.cache/pypoetry/cache \
+    --mount=type=cache,target=~/.cache/pypoetry/artifacts \
+    poetry install --no-root --only torch
 
 # Install the remaining dependencies
-RUN poetry install --no-root --with docker
+RUN --mount=type=cache,target=~/.cache/pypoetry/cache \
+    --mount=type=cache,target=~/.cache/pypoetry/artifacts \
+    poetry install --no-root --with docker
 
 # Cache busting mechanism based on the latest commit from a GitHub repo
 ARG CACHEBUSTER=undefined
