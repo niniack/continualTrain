@@ -15,7 +15,11 @@ def singularity_pull_image(image_name):
     image_file_name = image_name.split("/")[-1].split(":")[0] + ".sif"
     save_path = os.path.join(save_dir, image_file_name)
 
-    command = f"singularity pull --force --name {save_path} docker://{image_name}"
+    command = f"""
+    export SINGULARITY_CACHEDIR=$SCRATCH &&
+    export SINGULARITY_TMPDIR=$TMPDIR &&
+    singularity pull --force --name {save_path} docker://{image_name}
+    """
     try:
         subprocess.run(
             command,
@@ -112,7 +116,7 @@ def singularity_run_training(
                 if overlays_list is not None
                 else []
             ),
-            f"{os.environ["SCRATCH"]}/.singularity/{image_name.split('/')[-1]}.sif",
+            f"{os.environ['SCRATCH']}/.singularity/{image_name.split('/')[-1]}.sif",
             *shell,
         ]
 
