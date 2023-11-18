@@ -8,7 +8,7 @@ from continualTrain.api.utils import check_path_exists
 
 
 def singularity_pull_image(image_name):
-    save_dir = os.path.join(os.environ["HOME"], ".singularity")
+    save_dir = os.path.join(os.environ["SCRATCH"], ".singularity")
     os.makedirs(save_dir, exist_ok=True)
 
     # Extract the image name without any tags for the file name
@@ -112,7 +112,7 @@ def singularity_run_training(
                 if overlays_list is not None
                 else []
             ),
-            f"{Path.home()}/.singularity/{image_name.split('/')[-1]}.sif",
+            f"{os.environ["SCRATCH"]}/.singularity/{image_name.split('/')[-1]}.sif",
             *shell,
         ]
 
