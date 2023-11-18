@@ -24,6 +24,7 @@ optional = true
 [tool.poetry.group.torch.dependencies]
 torch = {version = ">=2.1.0", source = "torch", allow-prereleases = true}
 torchvision = {version = "*", source = "torch", allow-prereleases = true}
+numpy = {version = "*"}
 
 [tool.poetry.group.docker]
 optional = true
