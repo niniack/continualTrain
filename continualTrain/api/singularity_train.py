@@ -40,7 +40,9 @@ def singularity_pull_image(image_name, local_registry: str = None):
             stdout=None,
             stderr=None,
         )
-        print(f"Successfully pulled and converted {image_name}.")
+        print(
+            f"Successfully pulled and converted {image_name}. It is saved at {save_path}"
+        )
         # Update the stored digest
         update_digest(image_name, save_dir)
     except subprocess.CalledProcessError as e:
