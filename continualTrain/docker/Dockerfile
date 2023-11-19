@@ -68,15 +68,15 @@ RUN --mount=type=cache,target=~/.cache/pypoetry/cache \
     --mount=type=cache,target=~/.cache/pypoetry/artifacts \
     poetry install --no-root --with docker
 
-# Cache busting mechanism based on the latest commit from a GitHub repo
-ARG CACHEBUSTER=undefined
-
 # Install additional dependencies from project
 ARG ADDITIONAL_DEPS
 ARG GIT_DEPS
 
 # Add non-git repositories
 RUN if [ -n "$ADDITIONAL_DEPS" ] ; then poetry add $ADDITIONAL_DEPS ; fi
+
+# Cache busting mechanism based on the latest commit from a GitHub repo
+ARG CACHEBUSTER=undefined
 
 # Add git repositories
 RUN if [ -n "$GIT_DEPS" ] ; then for dep in $GIT_DEPS; do poetry add $dep; done ; fi
