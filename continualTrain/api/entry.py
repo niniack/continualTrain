@@ -8,7 +8,10 @@ from typing_extensions import Annotated
 from continualTrain.api import singularity_train
 from continualTrain.api.docker_build import build_docker_image
 from continualTrain.api.docker_train import docker_run_training
-from continualTrain.api.singularity_train import singularity_run_training
+from continualTrain.api.singularity_train import (
+    singularity_pull_image,
+    singularity_run_training,
+)
 from continualTrain.api.utils import (
     OPTIONAL_KEYS,
     REQUIRED_KEYS,
@@ -84,6 +87,18 @@ def build(
         push=push,
         local_registry="localhost:5000",
     )
+
+
+@app.command()
+def singpull(
+    image_name: Annotated[str, typer.Argument(help="Name of the image.")],
+    local_registry: Annotated[
+        str, typer.Option(help="URL of the local registry")
+    ] = "10.224.35.137:5000",
+):
+    """Build a Docker image based on project configuration and push it to the hub."""
+
+    singularity_pull_image(image_name, local_registry)
 
 
 @app.command()

@@ -90,9 +90,6 @@ def singularity_run_training(
 
     this_dir = Path(__file__).resolve().parent.parent
 
-    local_registry = "10.224.35.137:5000"
-    singularity_pull_image(image_name, local_registry)
-
     processes = []  # List to keep track of all started processes
 
     # Singularity environment variables and bind paths
