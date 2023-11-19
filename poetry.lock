@@ -2436,31 +2436,6 @@ url = "https://download.pytorch.org/whl/cu118"
 reference = "torch"
 
 [[package]]
-name = "torchaudio"
-version = "2.1.1+cu118"
-description = "An audio package for PyTorch"
-optional = false
-python-versions = "*"
-files = [
-    {file = "torchaudio-2.1.1+cu118-cp310-cp310-linux_x86_64.whl", hash = "sha256:46d671337ffa0dd926bf60cfb01f12daad0a99007e20a7d1d9fdb6b72c180abf"},
-    {file = "torchaudio-2.1.1+cu118-cp310-cp310-win_amd64.whl", hash = "sha256:8820064ee5783c4a1b17e992713c0c3fba9afaef9ba0346a4a0403c3c833f384"},
-    {file = "torchaudio-2.1.1+cu118-cp311-cp311-linux_x86_64.whl", hash = "sha256:2b077639f240176bb27e964e2e9b3a5c2a8d560a3a7bc1ffd0a024e81f2e10b4"},
-    {file = "torchaudio-2.1.1+cu118-cp311-cp311-win_amd64.whl", hash = "sha256:79b5afa556063be18de4a1964339242301fe04e782e1030a22695257dd9afbd2"},
-    {file = "torchaudio-2.1.1+cu118-cp38-cp38-linux_x86_64.whl", hash = "sha256:8269e2c8fb09ed44ddb7c18b7dfea0cd282d63adc084443139229b851b3be7d4"},
-    {file = "torchaudio-2.1.1+cu118-cp38-cp38-win_amd64.whl", hash = "sha256:b71d8bd4c8c0eb42b063fc2f2a46b3610659c628b5c23c63e2860b6bdceba133"},
-    {file = "torchaudio-2.1.1+cu118-cp39-cp39-linux_x86_64.whl", hash = "sha256:acfd5eeab01b332f48d235dff95a241ef14b719247e69f6965973326fdfdc179"},
-    {file = "torchaudio-2.1.1+cu118-cp39-cp39-win_amd64.whl", hash = "sha256:7358c95be78723c75b88784c6d5021b1197a94b1951190903f11b38a9ffd3bf5"},
-]
-
-[package.dependencies]
-torch = "2.1.1"
-
-[package.source]
-type = "legacy"
-url = "https://download.pytorch.org/whl/cu118"
-reference = "torch"
-
-[[package]]
 name = "torchmetrics"
 version = "1.2.0"
 description = "PyTorch native Metrics"
@@ -2775,4 +2750,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.11"
-content-hash = "f0f189536178f398b3d9e09ed40d0692d9890a4ed13eb83ba13c8af752f452c6"
+content-hash = "ae266aa13f98fdd30663ee91e3211bb745bd08eddb97dc9d34691e5e3098eea1"

@@ -1,5 +1,5 @@
 # Start from the NVIDIA PyTorch image
-FROM nvidia/cuda:11.7.1-runtime-ubuntu22.04
+FROM nvidia/cuda:11.7.1-runtime-ubuntu22.04 as builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 # ARG USERNAME=developer
@@ -39,44 +39,48 @@ RUN rm -f /usr/bin/python && ln -s /usr/bin/python3 /usr/bin/python
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
     POETRY_VIRTUALENVS_CREATE=1 \
-    POETRY_CACHE_DIR=/tmp/poetry_cache \
     POETRY_HOME=/opt/poetry \
     POETRY_VIRTUALENVS_OPTIONS_SYSTEM_SITE_PACKAGES=1
 
 # Install poetry with pinned version
 RUN curl -sSL https://install.python-poetry.org | python3 - --git https://github.com/python-poetry/poetry.git@master
 ENV PATH="$PATH:$POETRY_HOME/bin"
-
 # Set site packages to be available
 # The env vars should have handled this 
 # But that is currently broken for OPTIONS
 RUN poetry config virtualenvs.options.system-site-packages true
 
+# Copy poetry files
 COPY poetry.lock poetry.lock
-
-# Copy the toml file for continualTrain 
-# Build context is the repo root
 COPY pyproject.toml pyproject.toml
 
 # Install the heavy dependencies for continualTrain
 RUN --mount=type=cache,target=~/.cache/pypoetry/cache \
     --mount=type=cache,target=~/.cache/pypoetry/artifacts \
-    poetry install --no-root --only torch
+    poetry install --no-root --only torch \
+    && rm -rf ~/.cache/pypoetry/cache \
+    && rm -rf ~/.cache/pypoetry/artifacts
 
 # Install the remaining dependencies
 RUN --mount=type=cache,target=~/.cache/pypoetry/cache \
     --mount=type=cache,target=~/.cache/pypoetry/artifacts \
-    poetry install --no-root --with docker
+    poetry install --no-root --with docker \
+    && rm -rf ~/.cache/pypoetry/cache \
+    && rm -rf ~/.cache/pypoetry/artifacts
 
 # Install additional dependencies from project
 ARG ADDITIONAL_DEPS
 ARG GIT_DEPS
 
 # Add non-git repositories
-RUN if [ -n "$ADDITIONAL_DEPS" ] ; then poetry add $ADDITIONAL_DEPS ; fi
+RUN if [ -n "$ADDITIONAL_DEPS" ] ; then poetry add $ADDITIONAL_DEPS ; fi \
+    && rm -rf ~/.cache/pypoetry/cache \
+    && rm -rf ~/.cache/pypoetry/artifacts
 
 # Cache busting mechanism based on the latest commit from a GitHub repo
 ARG CACHEBUSTER=undefined
 
 # Add git repositories
-RUN if [ -n "$GIT_DEPS" ] ; then for dep in $GIT_DEPS; do poetry add $dep; done ; fi
+RUN if [ -n "$GIT_DEPS" ] ; then poetry add $GIT_DEPS ; fi \
+    && rm -rf ~/.cache/pypoetry/cache \
+    && rm -rf ~/.cache/pypoetry/artifacts
