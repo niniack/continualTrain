@@ -79,7 +79,10 @@ def build(
 
     parsed_config = read_toml_config(config)
     build_docker_image(
-        add_deps=parsed_config["dependencies_list"], image_name=image_name, push=push
+        add_deps=parsed_config["dependencies_list"],
+        image_name=image_name,
+        push=push,
+        local_registry="localhost:5000",
     )
 
 

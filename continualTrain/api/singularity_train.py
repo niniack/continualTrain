@@ -8,23 +8,29 @@ from rich import print
 from continualTrain.api.utils import check_path_exists
 
 
-def singularity_pull_image(image_name):
+def singularity_pull_image(image_name, local_registry: str = None):
     save_dir = os.path.join(os.environ["SCRATCH"], ".singularity")
     os.makedirs(save_dir, exist_ok=True)
 
-    # Check if image needs to be updated
-    if not is_image_update_required(image_name, save_dir):
-        print(f"No update needed for {image_name}.")
-        return
+    # # Check if image needs to be updated
+    # if not is_image_update_required(image_name, save_dir):
+    #     print(f"No update needed for {image_name}.")
+    #     return
 
     # Extract the image name without any tags for the file name
     image_file_name = image_name.split("/")[-1].split(":")[0] + ".sif"
     save_path = os.path.join(save_dir, image_file_name)
 
+    if local_registry:
+        image_path = f"docker://{local_registry}/{image_name}"
+    else:
+        image_path = f"docker://{image_name}"
+
     command = f"""
     export SINGULARITY_CACHEDIR=$SCRATCH &&
     export SINGULARITY_TMPDIR=$TMPDIR &&
-    singularity pull --force --name {save_path} docker://{image_name}
+    export SINGULARITY_NOHTTPS=1 &&
+    singularity pull --force --name {save_path} {image_path}
     """
     try:
         subprocess.run(
@@ -84,7 +90,8 @@ def singularity_run_training(
 
     this_dir = Path(__file__).resolve().parent.parent
 
-    singularity_pull_image(image_name)
+    local_registry = "10.224.35.137:5000"
+    singularity_pull_image(image_name, local_registry)
 
     processes = []  # List to keep track of all started processes
 

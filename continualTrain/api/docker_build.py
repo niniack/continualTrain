@@ -6,7 +6,9 @@ from rich import print
 from continualTrain.api.utils import get_latest_commit_sha
 
 
-def build_docker_image(add_deps: list, image_name: str, push: bool) -> None:
+def build_docker_image(
+    add_deps: list, image_name: str, push: bool, local_registry: str = None
+) -> None:
     non_git_deps = []
     git_deps = []
     for dep in add_deps:
@@ -43,4 +45,10 @@ def build_docker_image(add_deps: list, image_name: str, push: bool) -> None:
     subprocess.run(command, check=True)
 
     if push:
-        subprocess.run(["docker", "push", image_name], check=True)
+        if local_registry:
+            tagged_image = f"{local_registry}/{image_name}"
+            subprocess.run(["docker", "tag", image_name, tagged_image], check=True)
+            subprocess.run(["docker", "push", tagged_image], check=True)
+        else:
+            # Push the image to its original registry
+            subprocess.run(["docker", "push", image_name], check=True)
