@@ -262,7 +262,7 @@ def main():
                     cl_strategy.train(
                         experience,
                         eval_streams=[val_exp] if val_stream is not None else [],
-                        num_workers=4,
+                        num_workers=8,
                         collate_fn=collate_fn,
                     )
                     print("Training completed")
