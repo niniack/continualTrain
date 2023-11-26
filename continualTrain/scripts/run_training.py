@@ -213,7 +213,7 @@ def main():
                 "model_class": type(model).__name__,
                 "optimizer_type": type(optimizer).__name__,
                 "experiences": int(dataset.n_experiences),
-                "scheduler_type": scheduler.scheduler.__name__,
+                "scheduler_type": type(scheduler.scheduler).__name__,
                 "nh_weight": metadata["nh_weight"] if "nh_weight" in metadata else 0,
             }
 
