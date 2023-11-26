@@ -1,6 +1,7 @@
 import argparse
 import importlib.util
 import json
+import os
 import sys
 
 import defaults
@@ -103,7 +104,7 @@ def main():
     wandb_entity = metadata["wandb_entity"]
     wandb_project_name = metadata["wandb_project_name"]
 
-    workers = 8
+    workers = len(os.sched_getaffinity(0))
 
     # Get a GPU
     try:
