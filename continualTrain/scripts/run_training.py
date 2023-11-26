@@ -10,6 +10,7 @@ import profiler
 import shortuuid
 import spec
 import torch
+from avalanche.benchmarks.utils.ffcv_support import enable_ffcv
 from avalanche.evaluation.metrics import accuracy_metrics
 from avalanche.logging import InteractiveLogger, WandBLogger
 from avalanche.training.plugins import EvaluationPlugin, LRSchedulerPlugin
@@ -102,6 +103,8 @@ def main():
     wandb_entity = metadata["wandb_entity"]
     wandb_project_name = metadata["wandb_project_name"]
 
+    workers = 8
+
     # Get a GPU
     try:
         deviceID = GPUtil.getFirstAvailable(
@@ -131,25 +134,36 @@ def main():
     interactive_logger = InteractiveLogger()
 
     # Benchmark obtained from the plugin manager
-    dataset = pm.hook.get_dataset(root_path="/datasets", seed=DS_SEED)
+    ds_root = "/datasets"
+    benchmark = pm.hook.get_dataset(root_path=ds_root, seed=DS_SEED)
+
+    # Super sonic
+    enable_ffcv(
+        benchmark=benchmark,
+        write_dir=f"{ds_root}/ffcv",
+        device=device,
+        ffcv_parameters=dict(num_workers=workers),
+        print_summary=True,
+    )
+
     train_stream = (
-        dataset.train_stream[: int(args.train_experiences)]
+        benchmark.train_stream[: int(args.train_experiences)]
         if hasattr(args, "train_experiences")
-        else dataset.train_stream
+        else benchmark.train_stream
     )
     test_stream = (
-        dataset.test_stream[: int(args.eval_experiences)]
+        benchmark.test_stream[: int(args.eval_experiences)]
         if hasattr(args, "eval_experiences")
-        else dataset.test_stream
+        else benchmark.test_stream
     )
 
     # Defaults to none
     val_stream = None
-    if hasattr(dataset, "val_stream"):
+    if hasattr(benchmark, "val_stream"):
         val_stream = (
-            dataset.val_stream[: int(args.train_experiences)]
+            benchmark.val_stream[: int(args.train_experiences)]
             if hasattr(args, "train_experiences")
-            else dataset.val_stream
+            else benchmark.val_stream
         )
     else:
         print("No validation set!")
@@ -212,7 +226,7 @@ def main():
                 "gpu_ID": deviceID[0],
                 "model_class": type(model).__name__,
                 "optimizer_type": type(optimizer).__name__,
-                "experiences": int(dataset.n_experiences),
+                "experiences": int(benchmark.n_experiences),
                 "scheduler_type": type(scheduler.scheduler).__name__,
                 "nh_weight": metadata["nh_weight"] if "nh_weight" in metadata else 0,
             }
@@ -263,7 +277,7 @@ def main():
                     cl_strategy.train(
                         experience,
                         eval_streams=[val_exp] if val_stream is not None else [],
-                        num_workers=8,
+                        num_workers=workers,
                         collate_fn=collate_fn,
                     )
                     print("Training completed")

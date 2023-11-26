@@ -17,12 +17,46 @@ ENV DEBIAN_FRONTEND=noninteractive
 #     && chmod 0440 /etc/sudoers.d/$USERNAME
 
 # Install required tools and libraries, and clean up to reduce layer size
-RUN apt-get update \
-    && apt-get install -y software-properties-common \
-    && add-apt-repository -y ppa:ubuntu-toolchain-r/test \
-    && apt-get update \
-    && apt-get install -y libstdc++6 libgl1 wget curl git bzip2 python3 python3-pip\
-    && wget "https://github.com/aristocratos/btop/releases/latest/download/btop-x86_64-linux-musl.tbz" \
+RUN apt-get update && apt-get upgrade -y &&\
+    apt-get install -y software-properties-common &&\
+    add-apt-repository -y ppa:ubuntu-toolchain-r/test &&\
+    apt-get update &&\
+    # Combined package list from both commands
+    apt-get install -y \
+        build-essential \
+        cmake \
+        git \
+        wget \
+        curl \
+        unzip \
+        yasm \
+        pkg-config \
+        libswscale-dev \
+        libjpeg-dev \
+        libpng-dev \
+        libtiff-dev \
+        libavformat-dev \
+        libpq-dev \
+        libxine2-dev \
+        libglew-dev \
+        libtiff5-dev \
+        zlib1g-dev \
+        libjpeg-dev \
+        libavcodec-dev \
+        libavformat-dev \
+        libavutil-dev \
+        libpostproc-dev \
+        libswscale-dev \
+        libeigen3-dev \
+        libgtk2.0-dev \
+        libstdc++6 \
+        libgl1 \
+        python3-dev \
+        python3-numpy \
+        python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN wget "https://github.com/aristocratos/btop/releases/latest/download/btop-x86_64-linux-musl.tbz" \
     && tar xvjf btop-x86_64-linux-musl.tbz -C /usr/local/bin \
     && rm btop-x86_64-linux-musl.tbz \
     && apt-get remove --purge -y software-properties-common \
@@ -32,6 +66,38 @@ RUN apt-get update \
 
 # Symlink python 
 RUN rm -f /usr/bin/python && ln -s /usr/bin/python3 /usr/bin/python
+
+ARG OPENCV_VERSION=4.7.0
+RUN cd /opt/ &&\
+    # Download and unzip OpenCV and opencv_contrib and delte zip files
+    wget https://github.com/opencv/opencv/archive/$OPENCV_VERSION.zip &&\
+    unzip $OPENCV_VERSION.zip &&\
+    rm $OPENCV_VERSION.zip &&\
+    wget https://github.com/opencv/opencv_contrib/archive/$OPENCV_VERSION.zip &&\
+    unzip ${OPENCV_VERSION}.zip &&\
+    rm ${OPENCV_VERSION}.zip &&\
+    # Create build folder and switch to it
+    mkdir /opt/opencv-${OPENCV_VERSION}/build && cd /opt/opencv-${OPENCV_VERSION}/build &&\
+    # Cmake configure
+    cmake \
+        -DOPENCV_EXTRA_MODULES_PATH=/opt/opencv_contrib-${OPENCV_VERSION}/modules \
+        -DWITH_CUDA=ON \
+        -DCUDA_ARCH_BIN=7.5,8.0,8.6 \
+        -DCMAKE_BUILD_TYPE=RELEASE \
+	-DOPENCV_GENERATE_PKGCONFIG=YES \
+        # Install path will be /usr/local/lib (lib is implicit)
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        .. &&\
+    # Make
+    make -j"$(nproc)" && \
+    # Install to /usr/local/lib
+    make install && \
+    ldconfig &&\
+    # Remove OpenCV sources and build folder
+    rm -rf /opt/opencv-${OPENCV_VERSION} && rm -rf /opt/opencv_contrib-${OPENCV_VERSION}
+
+RUN apt-get update -y
+RUN apt-get install -y libturbojpeg0-dev 
 
 # Set Poetry variables
 # The system site packages are important because we are using docker to give 
