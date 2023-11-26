@@ -250,10 +250,10 @@ def main():
                 model.save_weights(save_name)
             else:
                 val_stream_iter = iter(val_stream) if val_stream is not None else None
-                for i, experience in enumerate(train_stream):
+                for exp_id, experience in enumerate(train_stream):
                     # Get val exp, if exists
                     if val_stream is not None:
-                        val_exp = next(iter(val_stream_iter), None)
+                        val_exp = val_stream[exp_id]
 
                     # Invoke strategy train method
                     print("Start of experience: ", experience.current_experience)
@@ -270,14 +270,14 @@ def main():
 
                     # Invoke strategy evaluation method
                     print("Evaluating experiences")
-                    results.append(cl_strategy.eval(test_stream))
+                    results.append(cl_strategy.eval(test_stream[exp_id]))
 
                     # Save model
                     save_name = generate_model_save_name(
                         save_path=args.save_path,
                         strategy=strategy_name,
                         rand_uuid=rand_uuid,
-                        experience=i,
+                        experience=exp_id,
                         epoch=cl_strategy.train_epochs,
                     )
                     model.save_weights(save_name)
