@@ -138,14 +138,14 @@ def main():
     ds_root = "/datasets"
     benchmark = pm.hook.get_dataset(root_path=ds_root, seed=DS_SEED)
 
-    # # Super sonic
-    # enable_ffcv(
-    #     benchmark=benchmark,
-    #     write_dir=f"{ds_root}/ffcv",
-    #     device=device,
-    #     ffcv_parameters=dict(num_workers=workers),
-    #     print_summary=False,
-    # )
+    # Super sonic
+    enable_ffcv(
+        benchmark=benchmark,
+        write_dir=f"{ds_root}/ffcv",
+        device=device,
+        ffcv_parameters=dict(num_workers=workers),
+        print_summary=False,
+    )
 
     train_stream = (
         benchmark.train_stream[: int(args.train_experiences)]
