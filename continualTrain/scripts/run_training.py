@@ -144,7 +144,7 @@ def main():
         write_dir=f"{ds_root}/ffcv",
         device=device,
         ffcv_parameters=dict(num_workers=workers),
-        print_summary=True,
+        print_summary=False,
     )
 
     train_stream = (
