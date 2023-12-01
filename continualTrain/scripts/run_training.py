@@ -155,7 +155,7 @@ def main():
         decoder_def=None,
         decoder_includes_transformations=False,
         force_overwrite=False,
-        print_summary=True,
+        print_summary=False,
     )
 
     train_stream = (
