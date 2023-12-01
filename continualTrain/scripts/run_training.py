@@ -138,14 +138,25 @@ def main():
     ds_root = "/datasets"
     benchmark = pm.hook.get_dataset(root_path=ds_root, seed=DS_SEED)
 
-    # # Super sonic
-    # enable_ffcv(
-    #     benchmark=benchmark,
-    #     write_dir=f"{ds_root}/ffcv",
-    #     device=device,
-    #     ffcv_parameters=dict(num_workers=workers),
-    #     print_summary=False,
-    # )
+    # Super sonic
+    enable_ffcv(
+        benchmark,
+        f"{ds_root}/ffcv",
+        device,
+        ffcv_parameters=dict(
+            num_workers=workers,
+            write_mode="proportion",
+            compress_probability=0.50,
+            max_resolution=256,
+            jpeg_quality=90,
+            # order=QuasiRandom,
+            os_cache=True,
+        ),
+        decoder_def=None,
+        decoder_includes_transformations=False,
+        force_overwrite=False,
+        print_summary=True,
+    )
 
     train_stream = (
         benchmark.train_stream[: int(args.train_experiences)]
@@ -279,7 +290,9 @@ def main():
                         experience,
                         eval_streams=[val_exp] if val_stream is not None else [],
                         num_workers=workers,
+                        persistent_workers=True,
                         collate_fn=collate_fn,
+                        ffcv_args={"print_ffcv_summary": False, "batches_ahead": 2},
                     )
                     print("Training completed")
                     # LR Scheduler will reset here
