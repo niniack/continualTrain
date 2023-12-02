@@ -299,7 +299,14 @@ def main():
 
                     # Invoke strategy evaluation method
                     print("Evaluating experiences")
-                    results.append(cl_strategy.eval(test_stream[exp_id]))
+                    results.append(
+                        cl_strategy.eval(
+                            test_stream[exp_id],
+                            num_workers=workers,
+                            persistent_workers=True,
+                            ffcv_args={"print_ffcv_summary": False, "batches_ahead": 2},
+                        )
+                    )
 
                     # Save model
                     save_name = generate_model_save_name(
