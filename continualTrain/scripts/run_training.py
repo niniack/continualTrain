@@ -5,6 +5,7 @@ import os
 import sys
 
 import defaults
+import ffcv
 import GPUtil
 import pluggy
 import profiler
@@ -16,6 +17,7 @@ from avalanche.evaluation.metrics import accuracy_metrics
 from avalanche.logging import InteractiveLogger, WandBLogger
 from avalanche.training.plugins import EvaluationPlugin, LRSchedulerPlugin
 from avalanche.training.supervised.joint_training import JointTraining
+from custom_ffcv_transforms import RandomHorizontalFlipSeeded
 from torch.profiler import profile, record_function
 from utils import (
     DS_SEED,
@@ -138,6 +140,26 @@ def main():
     ds_root = "/datasets"
     benchmark = pm.hook.get_dataset(root_path=ds_root, seed=DS_SEED)
 
+    custom_decoder_pipeline = {
+        "field_0": [
+            ffcv.fields.rgb_image.SimpleRGBImageDecoder(),
+            RandomHorizontalFlipSeeded(0.5),
+        ],
+        "field_1": [
+            ffcv.fields.basics.IntDecoder(),
+            ffcv.transforms.ToTensor(),
+        ],
+        "field_2": [
+            ffcv.fields.ndarray.NDArrayDecoder(),
+            RandomHorizontalFlipSeeded(0.5),
+            ffcv.transforms.ToTensor(),
+        ],
+        "field_3": [
+            ffcv.fields.basics.IntDecoder(),
+            ffcv.transforms.ToTensor(),
+        ],
+    }
+
     # Super sonic
     enable_ffcv(
         benchmark,
@@ -152,7 +174,7 @@ def main():
             # order=QuasiRandom,
             os_cache=True,
         ),
-        decoder_def=None,
+        decoder_def=custom_decoder_pipeline,
         decoder_includes_transformations=False,
         force_overwrite=False,
         print_summary=False,
