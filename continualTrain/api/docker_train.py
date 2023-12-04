@@ -66,6 +66,9 @@ def docker_run_training(config, image_name, run_interactive, run_profiler, run_d
         if "eval_experiences" in config:
             cmd_str += f" --eval_experiences {config['eval_experiences']}"
 
+        if "enable_ffcv" in config:
+            cmd_str += f" --enable_ffcv"
+
         if "exclude_gpus_list" in config:
             gpus_str = " ".join(map(str, config["exclude_gpus_list"]))
             cmd_str += f" --exclude_gpus {gpus_str}"

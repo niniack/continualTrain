@@ -52,6 +52,9 @@ def parse_args():
         "--train_experiences", type=int, help="Number of experiences to train on"
     )
     parser.add_argument(
+        "--enable_ffcv", action="store_true", help="Use FFCV for dataloading"
+    )
+    parser.add_argument(
         "--eval_experiences", type=int, help="Number of experiences to evaluate on"
     )
     parser.add_argument(
@@ -161,24 +164,25 @@ def main():
     }
 
     # Super sonic
-    enable_ffcv(
-        benchmark,
-        f"{ds_root}/ffcv",
-        device,
-        ffcv_parameters=dict(
-            num_workers=workers,
-            write_mode="proportion",
-            compress_probability=0.50,
-            max_resolution=256,
-            jpeg_quality=90,
-            # order=QuasiRandom,
-            os_cache=True,
-        ),
-        decoder_def=custom_decoder_pipeline,
-        decoder_includes_transformations=False,
-        force_overwrite=False,
-        print_summary=False,
-    )
+    if args.enable_ffcv:
+        enable_ffcv(
+            benchmark,
+            f"{ds_root}/ffcv",
+            device,
+            ffcv_parameters=dict(
+                num_workers=workers,
+                write_mode="proportion",
+                compress_probability=0.50,
+                max_resolution=256,
+                jpeg_quality=90,
+                # order=QuasiRandom,
+                os_cache=True,
+            ),
+            decoder_def=custom_decoder_pipeline,
+            decoder_includes_transformations=False,
+            force_overwrite=False,
+            print_summary=False,
+        )
 
     train_stream = (
         benchmark.train_stream[: int(args.train_experiences)]
