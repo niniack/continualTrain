@@ -25,6 +25,10 @@ optional = true
 torch = {version = ">=2.1.0", source = "torch", markers = "sys_platform == 'linux'"}
 torchvision = {version = "*", source = "torch", markers = "sys_platform == 'linux'"}
 numpy = {version = "*"}
+ffcv = {version = "*"}
+cupy-cuda11x = {version = "*"}
+numba = {version = "*"}
+tbb = {version = "*"}
 
 [tool.poetry.group.docker]
 optional = true
