@@ -116,6 +116,9 @@ def singularity_run_training(
         if config.get("enable_wandb_logging", True):
             cmd_str += " --use_wandb"
 
+        if config.get("enable_ffcv", True):
+            cmd_str += " --enable_ffcv"
+
         if "train_experiences" in config:
             cmd_str += f" --train_experiences {config['train_experiences']}"
 

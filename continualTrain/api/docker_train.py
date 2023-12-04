@@ -60,14 +60,14 @@ def docker_run_training(config, image_name, run_interactive, run_profiler, run_d
         if config.get("enable_wandb_logging", True):
             cmd_str += " --use_wandb"
 
+        if config.get("enable_ffcv", True):
+            cmd_str += " --enable_ffcv"
+
         if "train_experiences" in config:
             cmd_str += f" --train_experiences {config['train_experiences']}"
 
         if "eval_experiences" in config:
             cmd_str += f" --eval_experiences {config['eval_experiences']}"
-
-        if "enable_ffcv" in config:
-            cmd_str += f" --enable_ffcv"
 
         if "exclude_gpus_list" in config:
             gpus_str = " ".join(map(str, config["exclude_gpus_list"]))
