@@ -101,7 +101,6 @@ def get_evaluator(loggers) -> EvaluationPlugin:
 required_metadata_keys = {
     "strategy_name",
     "dataset_name",
-    "model_name",
     "wandb_entity",
     "wandb_project_name",
 }
@@ -115,7 +114,6 @@ def get_metadata() -> dict:
     :return: A dictionary containing:
              - 'strategy_name': Name of the strategy.
              - 'dataset_name': Name of the dataset.
-             - 'model_name': Name of the model.
              - 'wandb_entity': WandB user.
              - 'wandb_project_name': WandB project.
     """

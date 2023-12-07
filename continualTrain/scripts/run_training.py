@@ -105,7 +105,6 @@ def main():
     # Extract setup metadata
     strategy_name = metadata["strategy_name"]
     dataset_name = metadata["dataset_name"]
-    model_name = metadata["model_name"]
     wandb_entity = metadata["wandb_entity"]
     wandb_project_name = metadata["wandb_project_name"]
 
