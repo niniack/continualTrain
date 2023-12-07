@@ -327,7 +327,7 @@ def main():
                     print("Evaluating experiences")
                     results.append(
                         cl_strategy.eval(
-                            test_stream[exp_id],
+                            test_stream,
                             num_workers=workers,
                             persistent_workers=True,
                             ffcv_args={"print_ffcv_summary": False, "batches_ahead": 2},
