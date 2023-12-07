@@ -266,8 +266,9 @@ def main():
                 "optimizer_type": type(optimizer).__name__,
                 "experiences": int(benchmark.n_experiences),
                 "scheduler_type": type(scheduler.scheduler).__name__,
-                "nh_weight": metadata["nh_weight"] if "nh_weight" in metadata else 0,
             }
+
+            wandb_config_dict.update(metadata)
 
             for key, value in optimizer.defaults.items():
                 wandb_config_dict[f"optimizer_{key}"] = value
