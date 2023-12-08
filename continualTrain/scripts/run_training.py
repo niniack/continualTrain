@@ -68,6 +68,10 @@ def parse_args():
 
 
 def main():
+    # Pytorch settings
+    torch.backends.cuda.matmul.allow_tf32 = True
+    torch.backends.cudnn.allow_tf32 = True
+
     # Args from the CLI interface
     args = parse_args()
 
