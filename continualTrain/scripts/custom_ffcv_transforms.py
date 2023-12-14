@@ -29,16 +29,18 @@ class RandomHorizontalFlipSeeded(Operation):
         flip_prob = self.flip_prob
 
         def flip(images, dst, indices):
-            # np.random.seed(12345)
+            np.random.seed(indices[-1])
+            should_flip = rand(images.shape[0]) < flip_prob
 
-            ###
-            # Maybe a bad idea
-            # But this is deterministic
-            num_images = images.shape[0]
-            num_flips = int(num_images * flip_prob)
-            should_flip = np.zeros(num_images, dtype=np.bool_)
-            should_flip[:num_flips] = True
-            ###
+            # ###
+            # # A bad idea
+            # # But this is deterministic
+            # # As good as not flipping
+            # num_images = images.shape[0]
+            # num_flips = int(num_images * flip_prob)
+            # should_flip = np.zeros(num_images, dtype=np.bool_)
+            # should_flip[:num_flips] = True
+            # ###
 
             for i in my_range(images.shape[0]):
                 if should_flip[i]:
