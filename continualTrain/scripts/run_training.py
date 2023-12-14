@@ -73,6 +73,7 @@ def main():
     torch.backends.cudnn.allow_tf32 = True
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True)
     torch.manual_seed(12345)
 
     # Args from the CLI interface
