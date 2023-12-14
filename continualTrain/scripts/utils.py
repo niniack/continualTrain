@@ -2,7 +2,7 @@ from enum import Enum
 
 from avalanche.core import SupervisedPlugin
 
-DS_SEED = 42
+DS_SEED = 79
 MODEL_SEEDS = [0]
 
 
