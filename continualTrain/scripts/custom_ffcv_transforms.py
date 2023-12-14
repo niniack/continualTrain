@@ -6,7 +6,7 @@ from ffcv.pipeline.allocation_query import AllocationQuery
 from ffcv.pipeline.compiler import Compiler
 from ffcv.pipeline.operation import Operation
 from ffcv.pipeline.state import State
-from numpy.random import rand
+from numba import np as numba_np
 
 
 class RandomHorizontalFlipSeeded(Operation):
@@ -29,7 +29,7 @@ class RandomHorizontalFlipSeeded(Operation):
         flip_prob = self.flip_prob
 
         def flip(images, dst, indices):
-            rng = np.random.default_rng(indices[-1])  # Independent RNG
+            rng = numba_np.random.default_rng(indices[-1])
             should_flip = rng.random(images.shape[0]) < flip_prob
             print(should_flip)
             for i in my_range(images.shape[0]):
