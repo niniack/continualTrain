@@ -1,9 +1,24 @@
+import os
+import random
 from enum import Enum
 
+import numpy as np
+import torch
 from avalanche.core import SupervisedPlugin
 
 DS_SEED = 79
 MODEL_SEEDS = [0]
+
+
+def seed_everything(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)  # if using multi-GPU
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    os.environ["PYTHONHASHSEED"] = str(seed)
 
 
 class ModelSaverPlugin(SupervisedPlugin):
