@@ -71,6 +71,9 @@ def main():
     # Pytorch settings
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.manual_seed(12345)
 
     # Args from the CLI interface
     args = parse_args()
