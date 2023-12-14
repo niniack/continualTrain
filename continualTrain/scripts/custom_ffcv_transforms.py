@@ -29,8 +29,8 @@ class RandomHorizontalFlipSeeded(Operation):
         flip_prob = self.flip_prob
 
         def flip(images, dst, indices):
-            np.random.seed(indices[-1])
-            should_flip = rand(images.shape[0]) < flip_prob
+            rng = np.random.default_rng(indices[-1])  # Independent RNG
+            should_flip = rng.random(images.shape[0]) < flip_prob
             print(should_flip)
             for i in my_range(images.shape[0]):
                 if should_flip[i]:
