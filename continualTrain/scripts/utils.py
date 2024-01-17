@@ -1,6 +1,5 @@
 import os
 import random
-from enum import Enum
 
 import numpy as np
 import torch
@@ -11,6 +10,7 @@ MODEL_SEEDS = [0]
 
 
 def seed_everything(seed):
+    """Seeds everything with the same seed"""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -22,6 +22,10 @@ def seed_everything(seed):
 
 
 class ModelSaverPlugin(SupervisedPlugin):
+    """
+    Plugin to save a snapshot of a model with a unique name
+    """
+
     def __init__(self, save_frequency, strategy_name, rand_uuid, save_path):
         super().__init__()
         self.save_frequency = save_frequency
@@ -47,4 +51,6 @@ def generate_model_save_name(save_path, strategy, rand_uuid, experience, epoch):
 
 
 def verify_model_save_weights(model):
-    return hasattr(model, "save_weights") and callable(getattr(model, "save_weights"))
+    return hasattr(model, "save_weights") and callable(
+        getattr(model, "save_weights")
+    )

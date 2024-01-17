@@ -1,10 +1,6 @@
 import subprocess
 from pathlib import Path
 
-from rich import print
-
-from continualTrain.api.utils import get_latest_commit_sha
-
 
 def build_docker_image(
     add_deps: list, image_name: str, push: bool, local_registry: str = None
@@ -23,17 +19,14 @@ def build_docker_image(
     script_dir = Path(__file__).resolve().parent
     parent_dir = script_dir.parent
     docker_dir = parent_dir / "docker"
-    LATEST_COMMIT = get_latest_commit_sha(
-        "https://github.com/niniack/continualUtils", "dev"
-    )
 
+    # Not shown here, but you can pass in a CACHEBUSTER build arg
+    # This will bust the cache for a github repo
     command = [
         "docker",
         "build",
         "-t",
         image_name,
-        "--build-arg",
-        f"CACHEBUSTER={LATEST_COMMIT}",
         "--build-arg",
         f"ADDITIONAL_DEPS={non_git_deps_str}",
         "--build-arg",
@@ -47,7 +40,9 @@ def build_docker_image(
     if push:
         if local_registry:
             tagged_image = f"{local_registry}/{image_name}"
-            subprocess.run(["docker", "tag", image_name, tagged_image], check=True)
+            subprocess.run(
+                ["docker", "tag", image_name, tagged_image], check=True
+            )
             subprocess.run(["docker", "push", tagged_image], check=True)
         else:
             # Push the image to its original registry

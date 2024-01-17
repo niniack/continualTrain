@@ -40,14 +40,48 @@ pluggy = { version = "*"}
 shortuuid = { version = "*"}
 natsort = { version = "*"}
 protobuf = { version = "3.20.*"}
-continualUtils = { git = "https://github.com/niniack/continualUtils.git", branch = "dev"}
+# continualUtils = { git = "https://github.com/niniack/continualUtils.git", branch = "dev"}
 avalanche-lib = { git = "https://github.com/ContinualAI/avalanche", rev = "12f37f8"}
 cupy-cuda11x = { version = "*"}
 numba = { version = "*"}
 tbb = { version = "*"}
+transformers = "^4.35"
+
+[tool.poetry.group.test]
+optional = true
+
+[tool.poetry.group.test.dependencies]
+datasets = "^2.14.5"
+pytest = "^7.4"
+grad-cam = "^1.4.8"
+opencv-python-headless = "*"
+ipytest = "*"
+torchviz = "^0.0.2"
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.26.0"
 
 [tool.poetry.scripts]
 barracks = "continualTrain.api.entry:app"
+devtest = "tests.run_tests:main"
+
+[tool.black]
+line-length = 80
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning"
+]
+log_cli = true
+
+[tool.pylint.main]
+generated-members = "torch.*, avalanche.*"
+disable = "c0114, r0913, w0212, e1101, e1102, w0105"
+
 
 [[tool.poetry.source]]
 name = "torch"

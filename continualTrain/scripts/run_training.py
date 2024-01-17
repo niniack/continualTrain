@@ -1,25 +1,20 @@
 import argparse
 import importlib.util
-import json
 import os
 import sys
 
-import defaults
 import ffcv
 import GPUtil
 import pluggy
-import profiler
+import scripts.defaults as defaults
+import scripts.spec as spec
 import shortuuid
-import spec
 import torch
 from avalanche.benchmarks.utils.ffcv_support import enable_ffcv
-from avalanche.evaluation.metrics import accuracy_metrics
 from avalanche.logging import InteractiveLogger, WandBLogger
-from avalanche.training.plugins import EvaluationPlugin, LRSchedulerPlugin
 from avalanche.training.supervised.joint_training import JointTraining
-from custom_ffcv_transforms import RandomHorizontalFlipSeeded
-from torch.profiler import profile, record_function
-from utils import (
+from scripts.custom_ffcv_transforms import RandomHorizontalFlipSeeded
+from scripts.utils import (
     DS_SEED,
     MODEL_SEEDS,
     ModelSaverPlugin,
@@ -28,7 +23,8 @@ from utils import (
     verify_model_save_weights,
 )
 
-"""This script imports the given model file and executes training 
+"""
+This script imports the given model file and executes training 
 in accordance with the configuration file 
 """
 
@@ -48,18 +44,27 @@ def parse_args():
         required=True,
         help="Path to save models",
     )
-    parser.add_argument("--use_wandb", action="store_true", help="Uses WandB logging")
     parser.add_argument(
-        "--train_experiences", type=int, help="Number of experiences to train on"
+        "--use_wandb", action="store_true", help="Uses WandB logging"
+    )
+    parser.add_argument(
+        "--train_experiences",
+        type=int,
+        help="Number of experiences to train on",
     )
     parser.add_argument(
         "--enable_ffcv", action="store_true", help="Use FFCV for dataloading"
     )
     parser.add_argument(
-        "--eval_experiences", type=int, help="Number of experiences to evaluate on"
+        "--eval_experiences",
+        type=int,
+        help="Number of experiences to evaluate on",
     )
     parser.add_argument(
-        "--exclude_gpus", nargs="*", type=int, help="The Device IDs of GPUs to exclude"
+        "--exclude_gpus",
+        nargs="*",
+        type=int,
+        help="The Device IDs of GPUs to exclude",
     )
     parser.add_argument(
         "--profile", action="store_true", help="Profile the main training loop."
@@ -130,7 +135,9 @@ def main():
     except RuntimeError as e:
         sys.exit(f"Error obtaining GPU: {e}")
 
-    device = torch.device(f"cuda:{deviceID[0]}" if deviceID is not None else "cpu")
+    device = torch.device(
+        f"cuda:{deviceID[0]}" if deviceID is not None else "cpu"
+    )
 
     # Verify model can save
     temp_model = pm.hook.get_model(device=device, seed=0)
@@ -257,7 +264,9 @@ def main():
 
         # Set up wandb logging, if requested
         if args.use_wandb:
-            run_name = f"{rand_uuid}_seed{model_seed}_{strategy_name}_{dataset_name}"
+            run_name = (
+                f"{rand_uuid}_seed{model_seed}_{strategy_name}_{dataset_name}"
+            )
             wandb_params = {"entity": wandb_entity, "name": run_name}
 
             # Extract and log common hyperparameters
@@ -288,69 +297,71 @@ def main():
 
         # Train and test loop
         results = []
-        with profiler.conditional_profiler(
-            args.profile,
-            activities=[
-                torch.profiler.ProfilerActivity.CPU,
-                torch.profiler.ProfilerActivity.CUDA,
-            ],
-            record_shapes=True,
-        ) as prof:
-            if isinstance(cl_strategy, JointTraining):
-                cl_strategy.train(train_stream)
-                results.append(cl_strategy.eval(test_stream))
+
+        if isinstance(cl_strategy, JointTraining):
+            cl_strategy.train(train_stream)
+            results.append(cl_strategy.eval(test_stream))
+            save_name = generate_model_save_name(
+                save_path=args.save_path,
+                strategy=strategy_name,
+                rand_uuid=rand_uuid,
+                experience=0,
+                epoch=cl_strategy.train_epochs,
+            )
+            model.save_weights(save_name)
+        else:
+            val_stream_iter = (
+                iter(val_stream) if val_stream is not None else None
+            )
+            for exp_id, experience in enumerate(train_stream):
+                # Get val exp, if exists
+                if val_stream is not None:
+                    val_exp = val_stream[exp_id]
+
+                # Invoke strategy train method
+                print("Start of experience: ", experience.current_experience)
+                print(
+                    "Current Classes: ",
+                    experience.classes_in_this_experience,
+                )
+
+                cl_strategy.train(
+                    experience,
+                    eval_streams=[val_exp] if val_stream is not None else [],
+                    num_workers=workers,
+                    persistent_workers=True,
+                    collate_fn=collate_fn,
+                    ffcv_args={
+                        "print_ffcv_summary": False,
+                        "batches_ahead": 2,
+                    },
+                )
+                print("Training completed")
+                # LR Scheduler will reset here
+
+                # Invoke strategy evaluation method
+                print("Evaluating experiences")
+                results.append(
+                    cl_strategy.eval(
+                        test_stream,
+                        num_workers=workers,
+                        persistent_workers=True,
+                        ffcv_args={
+                            "print_ffcv_summary": False,
+                            "batches_ahead": 2,
+                        },
+                    )
+                )
+
+                # Save model
                 save_name = generate_model_save_name(
                     save_path=args.save_path,
                     strategy=strategy_name,
                     rand_uuid=rand_uuid,
-                    experience=0,
+                    experience=exp_id,
                     epoch=cl_strategy.train_epochs,
                 )
                 model.save_weights(save_name)
-            else:
-                val_stream_iter = iter(val_stream) if val_stream is not None else None
-                for exp_id, experience in enumerate(train_stream):
-                    # Get val exp, if exists
-                    if val_stream is not None:
-                        val_exp = val_stream[exp_id]
-
-                    # Invoke strategy train method
-                    print("Start of experience: ", experience.current_experience)
-                    print("Current Classes: ", experience.classes_in_this_experience)
-
-                    cl_strategy.train(
-                        experience,
-                        eval_streams=[val_exp] if val_stream is not None else [],
-                        num_workers=workers,
-                        persistent_workers=True,
-                        collate_fn=collate_fn,
-                        ffcv_args={"print_ffcv_summary": False, "batches_ahead": 2},
-                    )
-                    print("Training completed")
-                    # LR Scheduler will reset here
-
-                    # Invoke strategy evaluation method
-                    print("Evaluating experiences")
-                    results.append(
-                        cl_strategy.eval(
-                            test_stream,
-                            num_workers=workers,
-                            persistent_workers=True,
-                            ffcv_args={"print_ffcv_summary": False, "batches_ahead": 2},
-                        )
-                    )
-
-                    # Save model
-                    save_name = generate_model_save_name(
-                        save_path=args.save_path,
-                        strategy=strategy_name,
-                        rand_uuid=rand_uuid,
-                        experience=exp_id,
-                        epoch=cl_strategy.train_epochs,
-                    )
-                    model.save_weights(save_name)
-
-        profiler.print_profiler_results(prof)
 
         if args.use_wandb:
             wandb_logger.wandb.finish()

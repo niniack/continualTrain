@@ -10,28 +10,40 @@ hookimpl = pluggy.HookimplMarker("continualTrain")
 
 @hookimpl
 def get_collate():
+    """Returns default collate"""
     return default_collate
 
 
 @hookimpl
 def get_optimizer(parameters):
+    """Returns SGD Optimizer
+
+    :param parameters: parameters to be optimized
+    """
     optimizer = SGD(parameters, lr=0.01, momentum=0.9, weight_decay=1e-4)
     return optimizer
 
 
 @hookimpl
 def get_scheduler(optimizer):
+    """Dummy function to return None, in place of a scheduler"""
     return None
 
 
 @hookimpl
 def get_criterion():
+    """Returns cross-entropy loss"""
     loss = CrossEntropyLoss()
     return loss
 
 
 @hookimpl
 def get_evaluator(loggers):
+    """Returns standard Avalanche evaluator.
+    Tracks statistics over epoch and experience.
+
+    :param loggers: logging plugins
+    """
     eval_plugin = EvaluationPlugin(
         accuracy_metrics(
             minibatch=False,
@@ -42,3 +54,4 @@ def get_evaluator(loggers):
         ),
         loggers=loggers,
     )
+    return eval_plugin

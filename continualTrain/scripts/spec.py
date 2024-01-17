@@ -1,11 +1,9 @@
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import pluggy
 from avalanche.training.plugins import EvaluationPlugin, LRSchedulerPlugin
 from torch.nn import Module
-from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
-from torch.utils.data import Dataset
 
 hookspec = pluggy.HookspecMarker("continualTrain")
 
@@ -72,7 +70,9 @@ def get_optimizer(parameters: Union[List, Tuple]) -> Optimizer:
 
 
 @hookspec(firstresult=True)
-def get_scheduler(optimizer: Union[Optimizer, None]) -> Optional[LRSchedulerPlugin]:
+def get_scheduler(
+    optimizer: Union[Optimizer, None]
+) -> Optional[LRSchedulerPlugin]:
     """
     Constructs and retrieves a scheduler
 
