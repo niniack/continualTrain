@@ -7,10 +7,14 @@ from rich import print
 from continualTrain.api.utils import check_path_exists
 
 
-def docker_run_training(config, image_name, run_interactive, run_profiler, run_debug):
+def docker_run_training(
+    config, image_name, run_interactive, run_profiler, run_debug
+):
     save_path = check_path_exists(config["save_path"], "save_path")
     dataset_path = check_path_exists(config["dataset_path"], "dataset_path")
-    training_dir_path = check_path_exists(config["training_dir"], "training_dir")
+    training_dir_path = check_path_exists(
+        config["training_dir"], "training_dir"
+    )
     hook_impl_files = list(training_dir_path.glob("hook*.py"))
 
     this_dir = Path(__file__).resolve().parent.parent
@@ -74,7 +78,7 @@ def docker_run_training(config, image_name, run_interactive, run_profiler, run_d
             cmd_str += f" --exclude_gpus {gpus_str}"
 
         if run_profiler:
-            cmd_str += f" --profile"
+            cmd_str += " --profile"
 
         # Construct the full Docker command:
         mode = "-it" if (run_interactive or run_debug) else "-d"

@@ -46,26 +46,28 @@ def singularity_pull_image(image_name, local_registry: str = None):
         # Update the stored digest
         update_digest(image_name, save_dir)
     except subprocess.CalledProcessError as e:
-        error_message = e.stderr.decode().strip() if e.stderr else "Unknown error"
+        error_message = (
+            e.stderr.decode().strip() if e.stderr else "Unknown error"
+        )
         print(f"Error pulling image: {error_message}")
 
 
 def get_docker_image_digest(image_name):
-    registry_url = (
-        f"https://registry.hub.docker.com/v2/repositories/{image_name}/tags/latest"
-    )
-    response = requests.get(registry_url)
+    registry_url = f"https://registry.hub.docker.com/v2/repositories/{image_name}/tags/latest"
+    response = requests.get(registry_url, timeout=10)  # timeout in seconds
     if response.status_code == 200:
         return response.json().get("images")[0].get("digest")
     else:
-        raise Exception("Failed to fetch image digest from DockerHub")
+        raise LookupError("Failed to fetch image digest from DockerHub")
 
 
 def is_image_update_required(image_name, save_dir):
     current_digest = get_docker_image_digest(image_name)
-    digest_file = os.path.join(save_dir, f"{image_name.replace('/', '_')}_digest.txt")
+    digest_file = os.path.join(
+        save_dir, f"{image_name.replace('/', '_')}_digest.txt"
+    )
     if os.path.exists(digest_file):
-        with open(digest_file, "r") as file:
+        with open(digest_file, "r", encoding="utf-8") as file:
             last_digest = file.read().strip()
             return last_digest != current_digest
     return True  # If no digest file found, assume update is needed
@@ -73,8 +75,10 @@ def is_image_update_required(image_name, save_dir):
 
 def update_digest(image_name, save_dir):
     current_digest = get_docker_image_digest(image_name)
-    digest_file = os.path.join(save_dir, f"{image_name.replace('/', '_')}_digest.txt")
-    with open(digest_file, "w") as file:
+    digest_file = os.path.join(
+        save_dir, f"{image_name.replace('/', '_')}_digest.txt"
+    )
+    with open(digest_file, "w", encoding="utf-8") as file:
         file.write(current_digest)
 
 
@@ -83,7 +87,9 @@ def singularity_run_training(
 ):
     save_path = check_path_exists(config["save_path"], "save_path")
     dataset_path = check_path_exists(config["dataset_path"], "dataset_path")
-    training_dir_path = check_path_exists(config["training_dir"], "training_dir")
+    training_dir_path = check_path_exists(
+        config["training_dir"], "training_dir"
+    )
     if "overlays_list" in config:
         overlays_list = config["overlays_list"]
     else:
@@ -95,7 +101,9 @@ def singularity_run_training(
     processes = []  # List to keep track of all started processes
 
     # Singularity environment variables and bind paths
-    environment = f"WANDB_API_KEY={config['wandb_api_key']},WANDB_DISABLE_GIT=True"
+    environment = (
+        f"WANDB_API_KEY={config['wandb_api_key']},WANDB_DISABLE_GIT=True"
+    )
     bind_paths = f"{this_dir}:/workspace,{training_dir_path}:/training_dir,{os.getenv('HOME')}/.ssh:/root/.ssh,{save_path}:/save,{dataset_path}:/datasets"
 
     # Optionally add CUDA_LAUNCH_BLOCKING if it's set in the config
