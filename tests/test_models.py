@@ -2,7 +2,45 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-from continualUtils.models import CustomResNet50
+from continualUtils.models import (
+    CustomResNet50,
+    PretrainedDeiTSmall,
+    PretrainedResNet18,
+)
+
+
+def test_resnet(device, split_tiny_imagenet):
+    model = PretrainedResNet18(
+        device=device,
+        output_hidden=False,
+    )
+
+    train_stream = split_tiny_imagenet.train_stream
+    exp_set = train_stream[0].dataset
+    image, *_ = exp_set[0]
+    image = F.interpolate(image.unsqueeze(0), (224, 224)).to(device)
+
+    output = model(image)
+
+    assert isinstance(output, torch.Tensor)
+    assert output.shape == (1, 1000)
+
+
+def test_deit(device, split_tiny_imagenet):
+    model = PretrainedDeiTSmall(
+        device=device,
+        output_hidden=False,
+    )
+
+    train_stream = split_tiny_imagenet.train_stream
+    exp_set = train_stream[0].dataset
+    image, *_ = exp_set[0]
+    image = F.interpolate(image.unsqueeze(0), (224, 224)).to(device)
+
+    output = model(image)
+
+    assert isinstance(output, torch.Tensor)
+    assert output.shape == (1, 1000)
 
 
 def test_save_load(device, tmpdir):

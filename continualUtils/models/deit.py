@@ -1,5 +1,9 @@
 import torch
-from transformers import DeiTConfig, DeiTForImageClassification
+from transformers import (
+    DeiTConfig,
+    DeiTForImageClassification,
+    ViTForImageClassification,
+)
 
 from continualUtils.models import FrameworkClassificationModel
 
@@ -15,7 +19,7 @@ class PretrainedDeiT(FrameworkClassificationModel):
         deit: str,
         output_hidden: bool = False,
     ):
-        _model = DeiTForImageClassification.from_pretrained(deit)
+        _model = ViTForImageClassification.from_pretrained(deit)
 
         super().__init__(
             model=_model,
