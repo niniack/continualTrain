@@ -9,14 +9,7 @@ import torch
 import torch.backends.cudnn
 from avalanche.benchmarks import NCExperience
 from avalanche.models import DynamicModule, MultiHeadClassifier, MultiTaskModule
-from avalanche.models.utils import avalanche_forward
-from functorch.experimental import replace_all_batch_norm_modules_
 from torch import nn
-from torch.nn.utils import parametrizations
-
-
-class MissingTasksException(Exception):
-    pass
 
 
 class BaseModel(ABC, MultiTaskModule, DynamicModule):
@@ -24,13 +17,13 @@ class BaseModel(ABC, MultiTaskModule, DynamicModule):
 
     def __init__(
         self,
-        seed: int,
         device: torch.device,
         model: torch.nn.Module,
         output_hidden: bool,
         is_multihead: bool,
         in_features: int,
         num_classes_total: int,
+        seed: int = 42,
         num_classes_per_head: Optional[int] = None,
         init_weights: bool = False,
         patch_batch_norm: bool = True,
@@ -57,6 +50,7 @@ class BaseModel(ABC, MultiTaskModule, DynamicModule):
 
         if self.num_classes_per_head is None:
             self.num_classes_per_head = self.num_classes_total
+
         # Set classifier style
         if self.is_multihead:
             self.multihead_classifier = MultiHeadClassifier(
@@ -141,20 +135,34 @@ class BaseModel(ABC, MultiTaskModule, DynamicModule):
             )
             self.multihead_classifier.to(self.device)
 
+    def _patch_batch_norm(self):
+        """
+        Replace all BatchNorm modules with GroupNorm and
+        apply weight normalization to all Conv2d layers.
+        """
+
+        def replace_bn_with_gn(module, module_path=""):
+            for child_name, child_module in module.named_children():
+                child_path = (
+                    f"{module_path}.{child_name}" if module_path else child_name
+                )
+
+                if isinstance(child_module, nn.BatchNorm2d):
+                    new_groupnorm = nn.GroupNorm(32, child_module.num_features)
+                    setattr(module, child_name, new_groupnorm)
+
+                else:
+                    replace_bn_with_gn(child_module, child_path)
+
+        # Apply the replacement function to the model
+        replace_bn_with_gn(self._model)
+
+        # Move to device
+        self._model.to(self.device)
+
     @property
-    @abstractmethod
     def model(self):
-        pass
-
-    @property
-    @abstractmethod
-    def hidden_layers(self):
-        pass
-
-    @property
-    @abstractmethod
-    def num_hidden(self):
-        pass
+        return self._model
 
     @abstractmethod
     def _save_weights_impl(self, dir_name):
@@ -165,19 +173,11 @@ class BaseModel(ABC, MultiTaskModule, DynamicModule):
         pass
 
     @abstractmethod
-    def forward(self, x, task_labels):
-        pass
-
-    @abstractmethod
-    def get_hidden_layer(self, *args, **kwargs):
-        pass
-
-    @abstractmethod
-    def _patch_batch_norm(self):
+    def forward(self, x, task_labels=None):
         pass
 
 
-class HuggingFaceResNet(BaseModel):
+class HuggingFaceModel(BaseModel):
     def _save_weights_impl(self, dir_name):
         # Check if the model has a 'save_pretrained' method
         if hasattr(self._model, "save_pretrained"):
@@ -215,10 +215,8 @@ class HuggingFaceResNet(BaseModel):
         self._model = self._model.to(self.device)
 
     def freeze_backbone(self, flag: bool):
+        """Freezes backbone"""
         self._freeze_backbone = flag
-
-    def get_hidden_layer(self, id):
-        raise NotImplementedError("To Do!")
 
     def forward(self, x, task_labels=None):
         if self.is_multihead:
@@ -252,28 +250,3 @@ class HuggingFaceResNet(BaseModel):
             return classifier_out, out.hidden_states
         else:
             return classifier_out
-
-    def _patch_batch_norm(self):
-        """
-        Replace all BatchNorm modules with GroupNorm and
-        apply weight normalization to all Conv2d layers.
-        """
-
-        def replace_bn_with_gn(module, module_path=""):
-            for child_name, child_module in module.named_children():
-                child_path = (
-                    f"{module_path}.{child_name}" if module_path else child_name
-                )
-
-                if isinstance(child_module, nn.BatchNorm2d):
-                    new_groupnorm = nn.GroupNorm(32, child_module.num_features)
-                    setattr(module, child_name, new_groupnorm)
-
-                else:
-                    replace_bn_with_gn(child_module, child_path)
-
-        # Apply the replacement function to the model
-        replace_bn_with_gn(self._model)
-
-        # Move to device
-        self._model.to(self.device)

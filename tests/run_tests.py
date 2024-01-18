@@ -7,7 +7,7 @@ import pytest
 def main():
     if len(sys.argv) < 2:
         print(
-            "Please specify a test file or a directory relative to the 'tests' directory"
+            "Please specify a test file or a directory relative to the 'tests' directory. You can run all tests by providing `.`"
         )
         sys.exit(1)
 

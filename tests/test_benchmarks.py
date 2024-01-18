@@ -1,16 +1,10 @@
-import pdb
-
 import ffcv
 import torch
-import torchvision.transforms as tv_transforms
 from avalanche.benchmarks import AvalancheDataset, SplitTinyImageNet
 from avalanche.benchmarks.utils.data_loader import TaskBalancedDataLoader
 from avalanche.benchmarks.utils.ffcv_support import (
     HybridFfcvLoader,
     enable_ffcv,
-)
-from avalanche.benchmarks.utils.ffcv_support.ffcv_transform_utils import (
-    SmartModuleWrapper,
 )
 from torch.utils.data.sampler import BatchSampler, SequentialSampler
 from tqdm import tqdm
@@ -42,7 +36,11 @@ def test_load_splitclickme():
     ds_root = "/mnt/datasets/clickme"
 
     split_clickme = SplitClickMe(
-        n_experiences=10, root=ds_root, seed=42, dummy=False
+        n_experiences=10,
+        root=ds_root,
+        seed=42,
+        dummy=False,
+        include_imagenet=False,
     )
 
     assert split_clickme.train_stream is not None
@@ -61,9 +59,7 @@ def test_load_splitclickme():
 
     batch = next(iter(dataloader))
 
-    assert len(batch) is 5
-
-    image, label, heatmap, token, task = batch
+    assert len(batch) == 5
 
 
 def test_ffcv_clickme(device, tmpdir):

@@ -5,6 +5,8 @@ from avalanche.training.templates import SupervisedTemplate
 
 
 class LearningRateMetric:
+    """Learning rate metric class"""
+
     def __init__(self):
         self.learning_rate: float = 0
 
@@ -20,9 +22,6 @@ class LearningRateMetric:
 
 class LearningRatePluginMetric(GenericPluginMetric[float, LearningRateMetric]):
     def __init__(self, reset_at, emit_at, mode):
-        """
-        Initialize the metric
-        """
         super().__init__(
             metric=LearningRateMetric(),
             reset_at=reset_at,
@@ -60,6 +59,16 @@ class EpochLearningRate(LearningRatePluginMetric):
 def learning_rate_metrics(
     minibatch=False, epoch=False
 ) -> List[LearningRatePluginMetric]:
+    """
+    Helper method that can be used to obtain the desired set of
+    plugin metrics.
+
+    :param minibatch: If True, will return a metric able to log
+        the minibatch harmonizer loss at training time.
+    :param epoch: If True, will return a metric able to log
+        the epoch harmonizer loss at training time.
+    :return: A list of plugin metrics.
+    """
     plugins: List[LearningRatePluginMetric] = []
 
     if minibatch:

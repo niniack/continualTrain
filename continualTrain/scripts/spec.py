@@ -91,6 +91,15 @@ def get_criterion() -> Module:
 
 
 @hookspec(firstresult=True)
+def get_ffcv_decoder_pipeline() -> dict:
+    """
+    Constructs a custom decoder pipeline for FFCv
+
+    :return: A loss criterion object.
+    """
+
+
+@hookspec(firstresult=True)
 def get_evaluator(loggers) -> EvaluationPlugin:
     """Constructs and retreives the evaluator plugin
 

@@ -13,7 +13,6 @@ import torch
 from avalanche.benchmarks.utils.ffcv_support import enable_ffcv
 from avalanche.logging import InteractiveLogger, WandBLogger
 from avalanche.training.supervised.joint_training import JointTraining
-from scripts.custom_ffcv_transforms import RandomHorizontalFlipSeeded
 from scripts.utils import (
     DS_SEED,
     MODEL_SEEDS,
@@ -118,7 +117,6 @@ def main():
     dataset_name = metadata["dataset_name"]
     wandb_entity = metadata["wandb_entity"]
     wandb_project_name = metadata["wandb_project_name"]
-
     workers = len(os.sched_getaffinity(0))
 
     # Get a GPU
@@ -155,27 +153,29 @@ def main():
     ds_root = "/datasets"
     benchmark = pm.hook.get_dataset(root_path=ds_root, seed=DS_SEED)
 
-    custom_decoder_pipeline = {
-        "field_0": [
-            ffcv.fields.rgb_image.SimpleRGBImageDecoder(),
-            RandomHorizontalFlipSeeded(0.5),
-        ],
-        "field_1": [
-            ffcv.fields.basics.IntDecoder(),
-            ffcv.transforms.ToTensor(),
-        ],
-        "field_2": [
-            ffcv.fields.ndarray.NDArrayDecoder(),
-            RandomHorizontalFlipSeeded(0.5),
-            ffcv.transforms.ToTensor(),
-        ],
-        "field_3": [
-            ffcv.fields.basics.IntDecoder(),
-            ffcv.transforms.ToTensor(),
-        ],
-    }
+    # custom_decoder_pipeline = {
+    #     "field_0": [
+    #         ffcv.fields.rgb_image.SimpleRGBImageDecoder(),
+    #         RandomHorizontalFlipSeeded(0.5),
+    #     ],
+    #     "field_1": [
+    #         ffcv.fields.basics.IntDecoder(),
+    #         ffcv.transforms.ToTensor(),
+    #     ],
+    #     "field_2": [
+    #         ffcv.fields.ndarray.NDArrayDecoder(),
+    #         RandomHorizontalFlipSeeded(0.5),
+    #         ffcv.transforms.ToTensor(),
+    #     ],
+    #     "field_3": [
+    #         ffcv.fields.basics.IntDecoder(),
+    #         ffcv.transforms.ToTensor(),
+    #     ],
+    # }
 
-    # Super sonic
+    custom_decoder_pipeline = pm.hook.get_ffcv_decoder_pipeline()
+
+    # Super sonic (in theory)
     if args.enable_ffcv:
         enable_ffcv(
             benchmark,
@@ -310,9 +310,6 @@ def main():
             )
             model.save_weights(save_name)
         else:
-            val_stream_iter = (
-                iter(val_stream) if val_stream is not None else None
-            )
             for exp_id, experience in enumerate(train_stream):
                 # Get val exp, if exists
                 if val_stream is not None:

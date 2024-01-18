@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Callable, Optional
 
 import torch
-from avalanche.benchmarks.utils import make_classification_dataset
+from avalanche.benchmarks.utils import _make_taskaware_classification_dataset
 from avalanche.benchmarks.utils.data_loader import ReplayDataLoader
 from avalanche.training.plugins.strategy_plugin import SupervisedPlugin
 from avalanche.training.storage_policy import (
@@ -134,7 +134,7 @@ class AdversarialReplayPlugin(SupervisedPlugin, supports_distributed=True):
             eps=self.epsilon,
             device=strategy.device,
         )
-        self.storage_policy.buffer = make_classification_dataset(
+        self.storage_policy.buffer = _make_taskaware_classification_dataset(
             self.storage_policy.buffer, transform=adversarial_transform
         )
 

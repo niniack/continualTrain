@@ -1,18 +1,15 @@
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
-from torch.nn.utils.parametrize import is_parametrized
 
-from continualUtils.models import CustomResNet50, PretrainedResNet50
+from continualUtils.models import CustomResNet50
 
 
 def test_save_load(device, tmpdir):
     model = CustomResNet50(
         device=device,
-        num_classes_total=100,
-        num_classes_per_head=10,
-        multihead=True,
-        patch_batch_norm=True,
+        num_classes_per_task=10,
+        make_multihead=True,
     )
 
     pre_state_dict = model.state_dict()
@@ -26,14 +23,34 @@ def test_save_load(device, tmpdir):
     # Function to compare two state dictionaries
     def compare_state_dicts(dict1, dict2):
         for key in dict1:
+            # Check if key is present in both dictionaries
             if key not in dict2:
+                print(f"Key '{key}' not found in second dictionary")
                 return False
+
+            # Check if both values are tensors
             if torch.is_tensor(dict1[key]) and torch.is_tensor(dict2[key]):
+                # Check if tensors are on the same device
+                if dict1[key].device != dict2[key].device:
+                    print(
+                        f"Tensor '{key}' is on different devices: {dict1[key].device} and {dict2[key].device}"
+                    )
+                    return False
+
+                # Check if tensor values are equal
                 if not torch.equal(dict1[key], dict2[key]):
+                    print(f"Mismatch in values for key '{key}':")
+                    print("First dict tensor:", dict1[key])
+                    print("Second dict tensor:", dict2[key])
                     return False
             else:
+                # Check non-tensor values
                 if dict1[key] != dict2[key]:
+                    print(
+                        f"Mismatch in non-tensor values for key '{key}': {dict1[key]} and {dict2[key]}"
+                    )
                     return False
+
         return True
 
     # Assert that the two state dictionaries are the same
@@ -44,9 +61,9 @@ def test_multihead(device, split_tiny_imagenet):
     """Tests multihead implementation"""
     model = CustomResNet50(
         device=device,
-        num_classes_total=100,
-        num_classes_per_head=10,
-        multihead=True,
+        num_classes_per_task=10,
+        make_multihead=True,
+        output_hidden=False,
     )
 
     train_stream = split_tiny_imagenet.train_stream
@@ -54,14 +71,15 @@ def test_multihead(device, split_tiny_imagenet):
     image, *_ = exp_set[0]
     image = F.interpolate(image.unsqueeze(0), (224, 224)).to(device)
 
-    model.adapt_model(experiences=train_stream[0])
-    output = model(image)
+    print(model)
 
-    assert isinstance(output, dict)
+    output = model(image)
+    print(output)
+    assert isinstance(output, dict), "Output is not dict"
 
     output = model(image, 0)
-
-    assert isinstance(output, Tensor)
+    print(output)
+    assert isinstance(output, Tensor), "Output is not Tensor"
 
 
 def test_patch_batch_norm(device):
@@ -72,8 +90,8 @@ def test_patch_batch_norm(device):
     # Initialize model
     model = CustomResNet50(
         device=device,
-        num_classes_total=num_classes,
-        patch_batch_norm=True,  # Enable patching
+        num_classes_per_task=10,
+        make_multihead=True,
     )
 
     # Apply the patch
@@ -106,7 +124,8 @@ def test_model_weight_init(device):
     # Initialize model
     model = CustomResNet50(
         device=device,
-        num_classes_total=num_classes,
+        num_classes_per_task=10,
+        make_multihead=True,
     )
 
     # Check if model.model is an instance of torch.nn.Module

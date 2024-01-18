@@ -38,6 +38,13 @@ def get_criterion():
 
 
 @hookimpl
+def get_ffcv_decoder_pipeline() -> dict:
+    """Dummy function to return None, in place of a decoder pipeline"""
+
+    return None
+
+
+@hookimpl
 def get_evaluator(loggers):
     """Returns standard Avalanche evaluator.
     Tracks statistics over epoch and experience.

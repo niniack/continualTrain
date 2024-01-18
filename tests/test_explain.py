@@ -9,22 +9,19 @@ from avalanche.benchmarks.scenarios.deprecated.dataset_scenario import (
 from avalanche.benchmarks.scenarios.deprecated.new_classes.nc_scenario import (
     NCScenario,
 )
-from torch import Tensor
-from torch.utils.data import DataLoader
-from torchvision import transforms
-from torchvision.models import alexnet
 
 from continualUtils.benchmarks.datasets.clickme import HEATMAP_INDEX
-from continualUtils.explain.losses.harmonizer_loss import NeuralHarmonizerLoss
+from continualUtils.explain.losses.harmonizer_loss import (
+    NeuralHarmonizerLoss,
+    _pyramidal_representation,
+    compute_pyramidal_mse,
+)
 from continualUtils.explain.losses.lwm_loss import LwMLoss
 from continualUtils.explain.tools import (
-    compute_grad_cam,
-    compute_pyramidal_mse,
     compute_saliency_map,
     compute_score,
     standardize_cut,
 )
-from continualUtils.explain.tools.pyramidal import _pyramidal_representation
 from continualUtils.models import (
     CustomResNet18,
     CustomResNet50,
@@ -61,7 +58,7 @@ def test_lwm_loss(
 
     input_img = image.unsqueeze(0).requires_grad_(True).to(device)
     heatmap = heatmap.unsqueeze(0)
-    token = token.unsqueeze(0)
+    token = torch.tensor([token])
     tasks = torch.tensor([task])
     labels = torch.tensor([label])
 
@@ -96,7 +93,7 @@ def test_harmonizer_loss_pretrained(
 
     input_img = image.unsqueeze(0).requires_grad_(True)
     heatmap = heatmap.unsqueeze(0)
-    token = token.unsqueeze(0)
+    token = torch.tensor([token])
     tasks = torch.tensor([task])
     labels = torch.tensor([label])
 

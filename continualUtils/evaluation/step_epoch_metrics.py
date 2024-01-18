@@ -5,6 +5,8 @@ from avalanche.training.templates import SupervisedTemplate
 
 
 class StepEpochMetric:
+    """Step epoch metric class"""
+
     def __init__(self):
         self.epoch: float = 0
 
@@ -19,10 +21,9 @@ class StepEpochMetric:
 
 
 class StepEpochPluginMetric(GenericPluginMetric[float, StepEpochMetric]):
+    """Plugin wrapper for step epoch"""
+
     def __init__(self, reset_at, emit_at, mode):
-        """
-        Initialize the metric
-        """
         super().__init__(
             metric=StepEpochMetric(),
             reset_at=reset_at,
@@ -42,6 +43,8 @@ class StepEpochPluginMetric(GenericPluginMetric[float, StepEpochMetric]):
 
 
 class StepEpoch(StepEpochPluginMetric):
+    """Wrapper for step epoch plugin"""
+
     def __init__(self):
         super().__init__(reset_at="experience", emit_at="epoch", mode="train")
 
@@ -50,4 +53,8 @@ class StepEpoch(StepEpochPluginMetric):
 
 
 def step_epoch_metrics() -> List[StepEpochPluginMetric]:
+    """
+    Helper method that can be used to obtain the desired set of
+    plugin metrics.
+    """
     return [StepEpoch()]

@@ -4,11 +4,13 @@ A tool to centralize the execution of continual learning models in Avalanche, fr
 
 #### What does it contain?
 
-This repository doesn't claim to do too much aside from run the main training loop and log things. As such, it contains a training loop skeleton + a logging module.
+This repository doesn't claim to do too much aside from run the main training loop and log things. As such, it contains a training loop skeleton + a logging module. 
 
-Bring Your Own Batteries (BYOB): continualTrain is an interface that runs the main training loop inside an already defined docker container, along with a comprehensive logging module to WandB. You bring your own model and strategies.
+It also includes continualUtils, a collection of common utilities and tools that can plug in with the main training loop.
 
-Everything is a plugin. Some are required (e.g. model, strategy, dataset), and others are not. If you don't give continualTrain a plugin, it will use a default plugin.
+Bring Your Own Batteries (BYOB): continualTrain is an interface that runs the main training loop inside an already defined docker container, along with a comprehensive logging module to WandB. You bring your own model and strategies. Or, pick them up from continualUtils and modify them.
+
+Everything is a plugin. Some are required (e.g. model, strategy, dataset), and others are not. If you do not give continualTrain a plugin, it will use a default plugin.
 
 #### Environment File
 

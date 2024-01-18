@@ -54,7 +54,7 @@ optional = true
 datasets = "^2.14.5"
 pytest = "^7.4"
 grad-cam = "^1.4.8"
-opencv-python-headless = "*"
+# opencv-python-headless = "*"
 ipytest = "*"
 torchviz = "^0.0.2"
 

@@ -1,11 +1,10 @@
-from typing import Callable, List, Optional
+import inspect
+from typing import Callable, List, Optional, Tuple, Union
 
 import torch
 import torch.nn.functional as F
 from torch.func import grad, vmap
 from torchvision.transforms.functional import gaussian_blur
-
-from continualUtils.explain.tools.utils import INPUT_IDX, check_pure_function
 
 
 def compute_saliency_map(
@@ -54,9 +53,7 @@ def compute_saliency_map(
         )
 
     # Set up gradient operator
-    compute_single_saliency = grad(
-        pure_function, argnums=INPUT_IDX, has_aux=False
-    )
+    compute_single_saliency = grad(pure_function, argnums=0, has_aux=False)
 
     # Set up vmap operator for entire batch
     # All relevant arguments must be batched (see in_dims argument)
@@ -89,3 +86,51 @@ def compute_saliency_map(
         per_sample_map = per_sample_map.detach()
 
     return per_sample_map
+
+
+def check_pure_function(func):
+    """Checks whether pure function requires the arguments
+    inputs, model, and targets
+
+    :param func: pure function to check
+    :return: _description_
+    """
+    signature = inspect.signature(func)
+    parameters = list(signature.parameters.keys())
+
+    required_args = {"x", "task", "y", "model"}
+    return required_args.issubset(parameters)
+
+
+def compute_score(
+    x: torch.Tensor,
+    task: int,
+    y: torch.Tensor,
+    model: torch.nn.Module,
+) -> Union[Tuple[torch.Tensor, dict], torch.Tensor]:
+    """
+    Since vmap will unbatch and vectorize the computation, we
+    assume that all the inputs do not have a batch dimension.
+    """
+
+    # Add batch dimension
+    x = x.unsqueeze(0)
+    y = y.unsqueeze(0)
+
+    # Simple forward
+    output = model(x, task)
+
+    if output.shape != y.shape:
+        raise OneHotException(
+            "The model outputs must be the shape as the target."
+        )
+
+    score = torch.sum(output * y)
+    return score
+
+
+class OneHotException(Exception):
+    """Raised when there was a one hot target expected"""
+
+    def __init__(self, message):
+        super().__init__(message)

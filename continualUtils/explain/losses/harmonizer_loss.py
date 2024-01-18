@@ -3,7 +3,6 @@ import torch.nn.functional as F
 from avalanche.training.regularization import RegularizationMethod
 
 from continualUtils.explain.tools import (
-    compute_pyramidal_mse,
     compute_saliency_map,
     compute_score,
     standardize_cut,
@@ -11,9 +10,9 @@ from continualUtils.explain.tools import (
 
 
 class NeuralHarmonizerLoss(RegularizationMethod):
-    """Neural Harmonizer
+    """Neural Harmonizer Loss
 
-    This method applies the neural harmonizer loss
+    Built from https://serre-lab.github.io/Harmonization/
     """
 
     def __init__(self, weight: float, epsilon: float = 1e-8):
@@ -66,3 +65,56 @@ class NeuralHarmonizerLoss(RegularizationMethod):
 
     def update(self, *args, **kwargs):
         pass
+
+
+def compute_pyramidal_mse(predicted_maps, true_maps, mb_tokens, num_levels=5):
+    """Compute the pyramidal versin of the mean squared error. Converts
+    maps to pyramidal representation and then computes the mse
+
+    :param predicted_maps: Output heatmaps from the model
+    :param true_maps: Ground truth maps
+    :param mb_tokens: Tokens from the dataset
+    :param num_levels: The number of downsampled pyramidal representations, defaults to 5
+    :return: Mean loss of all the representations
+    """
+    pyramid_y = _pyramidal_representation(true_maps, num_levels)
+    pyramid_y_pred = _pyramidal_representation(predicted_maps, num_levels)
+
+    pyramid_loss = [
+        _mse(pyramid_y[i], pyramid_y_pred[i], mb_tokens)
+        for i in range(num_levels + 1)
+    ]
+
+    return torch.mean(torch.stack(pyramid_loss), dim=0)
+
+
+def _mse(heatmaps_a, heatmaps_b, tokens):
+    """Computes the mean squared error between two heatmaps,
+    if the token is set to 1, ignored if token is 0
+
+    :param heatmaps_a: heatmap NCHW
+    :param heatmaps_b: heatmap NCHW
+    :param tokens: Token from ClickMe
+    :return: Mean squared error
+    """
+
+    # First compute error without reduction, to ensure tokens are accounted for
+    return torch.mean(
+        F.mse_loss(heatmaps_a, heatmaps_b, reduction="none")
+        * tokens[:, None, None, None]
+    )
+
+
+def _pyramidal_representation(maps, num_levels):
+    """Returns a list with num_levels downsampled heatmaps
+
+    :param maps: Heatmap NCHW
+    :param num_levels: Number of levels to downsample
+    :return: List of heatmaps
+    """
+    levels = [maps]
+    for _ in range(num_levels):
+        new_size = maps.shape[-1] // 2
+        maps = F.interpolate(maps, size=new_size, mode="bilinear")
+        levels.append(maps)
+    return levels
