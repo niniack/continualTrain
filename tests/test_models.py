@@ -6,7 +6,29 @@ from continualUtils.models import (
     CustomResNet50,
     PretrainedDeiTSmall,
     PretrainedResNet18,
+    SimpleMNISTCNN,
 )
+
+
+def test_simple_cnn(device, split_mnist):
+    model = SimpleMNISTCNN(
+        device=device,
+        num_classes_per_task=2,
+        output_hidden=False,
+        make_multihead=True,
+    )
+
+    train_stream = split_mnist.train_stream
+    exp_set = train_stream[0].dataset
+    image, *_ = exp_set[0]
+    image = image.unsqueeze(0).to(device)
+
+    print(image.shape)
+
+    output = model(image, 0)
+
+    assert isinstance(output, torch.Tensor)
+    assert output.shape == (1, 2)
 
 
 def test_resnet(device, split_tiny_imagenet):

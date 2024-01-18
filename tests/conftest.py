@@ -2,7 +2,11 @@ import logging
 
 import pytest
 import torch
-from avalanche.benchmarks.classic import PermutedMNIST, SplitTinyImageNet
+from avalanche.benchmarks.classic import (
+    PermutedMNIST,
+    SplitMNIST,
+    SplitTinyImageNet,
+)
 from avalanche.models import SimpleMLP
 from datasets import load_dataset
 from PIL import Image
@@ -28,6 +32,18 @@ def device():
 def pretrained_resnet18():
     model = PretrainedResNet18(device=torch.device("cpu"))
     return model
+
+
+@pytest.fixture
+def split_permuted_mnist():
+    perm_mnist = PermutedMNIST(n_experiences=2)
+    return perm_mnist
+
+
+@pytest.fixture
+def split_mnist():
+    split_mnist = SplitMNIST(n_experiences=5)
+    return split_mnist
 
 
 @pytest.fixture
@@ -104,14 +120,6 @@ def img_tensor_dataset():
     tensor1 = transform(image1).unsqueeze(0)
 
     return TensorDataset(tensor1, torch.Tensor([281]).long())
-
-
-@pytest.fixture
-def av_split_permuted_mnist():
-    perm_mnist = PermutedMNIST(n_experiences=2)
-    train_stream = perm_mnist.train_stream
-    test_stream = perm_mnist.test_stream
-    return train_stream, test_stream
 
 
 @pytest.fixture
