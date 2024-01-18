@@ -5,7 +5,6 @@ import typer
 from rich import print
 from typing_extensions import Annotated
 
-from continualTrain.api import singularity_train
 from continualTrain.api.docker_build import build_docker_image
 from continualTrain.api.docker_train import docker_run_training
 from continualTrain.api.singularity_train import (
@@ -61,7 +60,9 @@ def initialize(
 
 @app.command()
 def build(
-    image_name: Annotated[str, typer.Argument(help="Name of the Docker image.")],
+    image_name: Annotated[
+        str, typer.Argument(help="Name of the Docker image.")
+    ],
     config: Annotated[
         Path,
         typer.Option(
@@ -103,7 +104,9 @@ def singpull(
 
 @app.command()
 def train(
-    image_name: Annotated[str, typer.Argument(help="Name of the Docker image.")],
+    image_name: Annotated[
+        str, typer.Argument(help="Name of the Docker image.")
+    ],
     config: Annotated[
         Path,
         typer.Option(
@@ -127,7 +130,9 @@ def train(
     ] = ContainerTool.docker,
     interactive: Annotated[
         bool,
-        typer.Option("--interactive", "-it", help="Make the session interactive."),
+        typer.Option(
+            "--interactive", "-it", help="Make the session interactive."
+        ),
     ] = False,
     profiler: Annotated[
         bool, typer.Option("--profile", "-p", help="Run a Torch profiler.")
@@ -144,7 +149,9 @@ def train(
     parsed_config = read_toml_config(config)
 
     if tool == ContainerTool.docker:
-        docker_run_training(parsed_config, image_name, interactive, profiler, debug)
+        docker_run_training(
+            parsed_config, image_name, interactive, profiler, debug
+        )
     elif tool == ContainerTool.singularity:
         singularity_run_training(
             parsed_config, image_name, interactive, profiler, debug
