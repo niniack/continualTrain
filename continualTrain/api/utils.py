@@ -27,6 +27,7 @@ OPTIONAL_KEYS = [
     "exclude_gpus_list",
     "enable_cuda_debug",
     "overlays_list",
+    "enable_ffcv",
 ]
 
 
@@ -81,5 +82,7 @@ def read_toml_config(file_path: Path) -> dict:
 def check_path_exists(path, name):
     resolved_path = Path(path).resolve()
     if not resolved_path.exists():
-        raise ValueError(f"The provided {name} '{resolved_path}' does not exist!")
+        raise ValueError(
+            f"The provided {name} '{resolved_path}' does not exist!"
+        )
     return resolved_path

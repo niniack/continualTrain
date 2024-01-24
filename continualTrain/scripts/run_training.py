@@ -3,17 +3,17 @@ import importlib.util
 import os
 import sys
 
+import defaults
 import ffcv
 import GPUtil
 import pluggy
-import scripts.defaults as defaults
-import scripts.spec as spec
 import shortuuid
+import spec
 import torch
 from avalanche.benchmarks.utils.ffcv_support import enable_ffcv
 from avalanche.logging import InteractiveLogger, WandBLogger
 from avalanche.training.supervised.joint_training import JointTraining
-from scripts.utils import (
+from utils import (
     DS_SEED,
     MODEL_SEEDS,
     ModelSaverPlugin,
@@ -279,7 +279,9 @@ def main():
                 "model_class": type(model).__name__,
                 "optimizer_type": type(optimizer).__name__,
                 "experiences": int(benchmark.n_experiences),
-                "scheduler_type": type(scheduler.scheduler).__name__,
+                "scheduler_type": (
+                    type(scheduler.scheduler).__name__ if scheduler else "None"
+                ),
             }
 
             wandb_config_dict.update(metadata)
@@ -324,7 +326,9 @@ def main():
 
                 cl_strategy.train(
                     experience,
-                    eval_streams=[val_exp] if val_stream is not None else [],
+                    eval_streams=[val_exp]
+                    if val_stream is not None
+                    else [test_stream[exp_id]],
                     num_workers=workers,
                     persistent_workers=True,
                     collate_fn=collate_fn,

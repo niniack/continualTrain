@@ -5,7 +5,10 @@ description = "Train CL models in a Docker container"
 authors = ["Nishant S. Aswani <nishantaswani@nyu.edu>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "continualTrain"}]
+packages = [
+    # {include = "continualTrain"}, 
+    {include = "continualUtils"},
+]
 
 [build-system]
 requires = ["poetry-core>=1.5.0"]
@@ -25,6 +28,7 @@ optional = true
 torch = {version = ">=2.1.0", source = "torch", markers = "sys_platform == 'linux'"}
 torchvision = {version = "*", source = "torch", markers = "sys_platform == 'linux'"}
 numpy = {version = "*"}
+captum = {version = "^0.7.0"}
 ffcv = {version = "*"}
 cupy-cuda11x = {version = "*"}
 numba = {version = "*"}
@@ -40,12 +44,9 @@ pluggy = { version = "*"}
 shortuuid = { version = "*"}
 natsort = { version = "*"}
 protobuf = { version = "3.20.*"}
-# continualUtils = { git = "https://github.com/niniack/continualUtils.git", branch = "dev"}
-avalanche-lib = { git = "https://github.com/ContinualAI/avalanche", rev = "12f37f8"}
-cupy-cuda11x = { version = "*"}
-numba = { version = "*"}
-tbb = { version = "*"}
+avalanche-lib = { git = "https://github.com/ContinualAI/avalanche", rev = "12f37f8", allow-prereleases=true}
 transformers = "^4.35"
+# continualUtils = { path = "./app/continualUtils/", develop = true }
 
 [tool.poetry.group.test]
 optional = true
