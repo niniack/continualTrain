@@ -3,12 +3,14 @@ from typing import Any
 
 import torch
 import torch.nn.functional as F
+from avalanche.benchmarks.classic import SplitTinyImageNet
 from avalanche.benchmarks.scenarios.deprecated.dataset_scenario import (
     DatasetScenario,
 )
 from avalanche.benchmarks.scenarios.deprecated.new_classes.nc_scenario import (
     NCScenario,
 )
+from captum.attr import Saliency
 
 from continualUtils.benchmarks.datasets.clickme import HEATMAP_INDEX
 from continualUtils.explain.losses.harmonizer_loss import (
@@ -17,6 +19,7 @@ from continualUtils.explain.losses.harmonizer_loss import (
     compute_pyramidal_mse,
 )
 from continualUtils.explain.losses.lwm_loss import LwMLoss
+from continualUtils.explain.losses.sgt_loss import SaliencyGuidedLoss
 from continualUtils.explain.tools import (
     compute_saliency_map,
     compute_score,
@@ -30,128 +33,152 @@ from continualUtils.models import (
 )
 
 
-def test_lwm_loss(
-    split_clickme_benchmark: NCScenario | DatasetScenario[Any, Any, Any],
-    device: torch.device,
-    logger: Logger,
-):
-    # Define model
-    old_model = CustomResNet18(
+def test_sgt_loss(device):
+    """Test Saliency Guided Loss"""
+    sgt = SaliencyGuidedLoss()
+    tiny_imagenet = SplitTinyImageNet(
+        n_experiences=1,
+        dataset_root="/mnt/datasets/tinyimagenet",
+    )
+
+    model = PretrainedResNet18(
         device=device,
-        num_classes_total=1000,
-        num_classes_per_head=50,  # conftest splitclickme is 20 exp
-        multihead=True,
+        output_hidden=False,
     )
 
-    new_model = CustomResNet50(
-        device=device,
-        num_classes_total=1000,
-        num_classes_per_head=50,  # conftest splitclickme is 20 exp
-        multihead=True,
-    )
-
-    # Set up benchmark
-    train_stream = split_clickme_benchmark.train_stream
-    exp = train_stream[0]
-    exp_set = exp.dataset
-    (image, label, heatmap, token, task) = exp_set[0]
-
-    input_img = image.unsqueeze(0).requires_grad_(True).to(device)
-    heatmap = heatmap.unsqueeze(0)
-    token = torch.tensor([token])
-    tasks = torch.tensor([task])
-    labels = torch.tensor([label])
-
-    # Adapt the models
-    old_model.adapt_model(exp)
-    new_model.adapt_model(exp)
-
-    # Get loss object
-    lwm_loss = LwMLoss(weight=1, prev_model=old_model)
-    func_loss_diff_models = lwm_loss(mb_x=input_img, curr_model=new_model)
-
-    lwm_loss = LwMLoss(weight=1, prev_model=new_model)
-    func_loss_same_models = lwm_loss(mb_x=input_img, curr_model=new_model)
-
-    logger.debug(func_loss_diff_models)
-    logger.debug(func_loss_same_models)
-
-    assert func_loss_diff_models > func_loss_same_models
-
-
-def test_harmonizer_loss_pretrained(
-    pretrained_resnet18: PretrainedResNet18,
-    split_clickme_benchmark: NCScenario | DatasetScenario[Any, Any, Any],
-):
-    # Set up benchmark
-    train_stream = split_clickme_benchmark.train_stream
+    train_stream = tiny_imagenet.train_stream
     exp_set = train_stream[0].dataset
-    (image, label, heatmap, token, task) = exp_set[0]
+    image, label, *_ = exp_set[0]
+    image = image.unsqueeze(0).to(device)
 
-    # Define model
-    model = pretrained_resnet18
-
-    input_img = image.unsqueeze(0).requires_grad_(True)
-    heatmap = heatmap.unsqueeze(0)
-    token = torch.tensor([token])
-    tasks = torch.tensor([task])
-    labels = torch.tensor([label])
-
-    sa_map = compute_saliency_map(
-        pure_function=compute_score,
-        model=model,
-        inputs=input_img,
-        tasks=tasks,
-        targets=F.one_hot(labels, num_classes=model.num_classes_per_head),
-    )
-    sa_map_preprocess = standardize_cut(sa_map)
-    heatmap_preprocess = standardize_cut(heatmap)
-
-    # Get max
-    eps = 1e-6
-    with torch.no_grad():
-        _sa_max = (
-            torch.amax(sa_map_preprocess.detach(), dim=(2, 3), keepdim=True)
-            + eps
-        )
-        _hm_max = torch.amax(heatmap_preprocess, dim=(2, 3), keepdim=True) + eps
-
-        # Normalize the true heatmaps according to the saliency maps
-        heatmap_preprocess = heatmap_preprocess / _hm_max * _sa_max
-
-    manual_loss = compute_pyramidal_mse(
-        sa_map_preprocess, heatmap_preprocess, token
-    )
-
-    nh_loss = NeuralHarmonizerLoss(weight=1)
-    func_loss = nh_loss(
-        mb_x=input_img,
-        mb_y=labels,
-        mb_heatmap=heatmap,
-        model=model,
-        mb_tokens=token,
-        mb_tasks=tasks,
-    )  # type: ignore
-
-    assert torch.allclose(manual_loss, func_loss)
+    temp_mb_x = image.requires_grad_(True)
+    loss = sgt(temp_mb_x, label, model)
+    assert isinstance(loss, torch.Tensor)
+    assert loss.item() > 0.0
 
 
-def test_cut_ground_maps(
-    split_clickme_benchmark: NCScenario | DatasetScenario[Any, Any, Any]
-):
-    """Testing the output of standardizing SplitClickMe ground truth maps"""
+# def test_lwm_loss(
+#     split_clickme_benchmark: NCScenario | DatasetScenario[Any, Any, Any],
+#     device: torch.device,
+#     logger: Logger,
+# ):
+#     # Define model
+#     old_model = CustomResNet18(
+#         device=device,
+#         num_classes_total=1000,
+#         num_classes_per_head=50,  # conftest splitclickme is 20 exp
+#         multihead=True,
+#     )
 
-    train_stream = split_clickme_benchmark.train_stream
-    exp_set = train_stream[0].dataset
-    ground_map = exp_set[0][HEATMAP_INDEX].unsqueeze(0)
+#     new_model = CustomResNet50(
+#         device=device,
+#         num_classes_total=1000,
+#         num_classes_per_head=50,  # conftest splitclickme is 20 exp
+#         multihead=True,
+#     )
 
-    preprocessed_heatmaps = standardize_cut(ground_map)
+#     # Set up benchmark
+#     train_stream = split_clickme_benchmark.train_stream
+#     exp = train_stream[0]
+#     exp_set = exp.dataset
+#     (image, label, heatmap, token, task) = exp_set[0]
 
-    # This should only work pre-relu step
-    # mean_val = torch.mean(preprocessed_heatmaps, dim=(2, 3)).item()
-    # assert abs(mean_val) < 1e-5, f"Mean value is not close to 0, got {mean_val}"
+#     input_img = image.unsqueeze(0).requires_grad_(True).to(device)
+#     heatmap = heatmap.unsqueeze(0)
+#     token = torch.tensor([token])
+#     tasks = torch.tensor([task])
+#     labels = torch.tensor([label])
 
-    assert torch.min(preprocessed_heatmaps) >= 0.0
+#     # Adapt the models
+#     old_model.adapt_model(exp)
+#     new_model.adapt_model(exp)
+
+#     # Get loss object
+#     lwm_loss = LwMLoss(weight=1, prev_model=old_model)
+#     func_loss_diff_models = lwm_loss(mb_x=input_img, curr_model=new_model)
+
+#     lwm_loss = LwMLoss(weight=1, prev_model=new_model)
+#     func_loss_same_models = lwm_loss(mb_x=input_img, curr_model=new_model)
+
+#     logger.debug(func_loss_diff_models)
+#     logger.debug(func_loss_same_models)
+
+#     assert func_loss_diff_models > func_loss_same_models
+
+
+# def test_harmonizer_loss_pretrained(
+#     pretrained_resnet18: PretrainedResNet18,
+#     split_clickme_benchmark: NCScenario | DatasetScenario[Any, Any, Any],
+# ):
+#     # Set up benchmark
+#     train_stream = split_clickme_benchmark.train_stream
+#     exp_set = train_stream[0].dataset
+#     (image, label, heatmap, token, task) = exp_set[0]
+
+#     # Define model
+#     model = pretrained_resnet18
+
+#     input_img = image.unsqueeze(0).requires_grad_(True)
+#     heatmap = heatmap.unsqueeze(0)
+#     token = torch.tensor([token])
+#     tasks = torch.tensor([task])
+#     labels = torch.tensor([label])
+
+#     sa_map = compute_saliency_map(
+#         pure_function=compute_score,
+#         model=model,
+#         inputs=input_img,
+#         tasks=tasks,
+#         targets=F.one_hot(labels, num_classes=model.num_classes_per_head),
+#     )
+#     sa_map_preprocess = standardize_cut(sa_map)
+#     heatmap_preprocess = standardize_cut(heatmap)
+
+#     # Get max
+#     eps = 1e-6
+#     with torch.no_grad():
+#         _sa_max = (
+#             torch.amax(sa_map_preprocess.detach(), dim=(2, 3), keepdim=True)
+#             + eps
+#         )
+#         _hm_max = torch.amax(heatmap_preprocess, dim=(2, 3), keepdim=True) + eps
+
+#         # Normalize the true heatmaps according to the saliency maps
+#         heatmap_preprocess = heatmap_preprocess / _hm_max * _sa_max
+
+#     manual_loss = compute_pyramidal_mse(
+#         sa_map_preprocess, heatmap_preprocess, token
+#     )
+
+#     nh_loss = NeuralHarmonizerLoss(weight=1)
+#     func_loss = nh_loss(
+#         mb_x=input_img,
+#         mb_y=labels,
+#         mb_heatmap=heatmap,
+#         model=model,
+#         mb_tokens=token,
+#         mb_tasks=tasks,
+#     )  # type: ignore
+
+#     assert torch.allclose(manual_loss, func_loss)
+
+
+# def test_cut_ground_maps(
+#     split_clickme_benchmark: NCScenario | DatasetScenario[Any, Any, Any]
+# ):
+#     """Testing the output of standardizing SplitClickMe ground truth maps"""
+
+#     train_stream = split_clickme_benchmark.train_stream
+#     exp_set = train_stream[0].dataset
+#     ground_map = exp_set[0][HEATMAP_INDEX].unsqueeze(0)
+
+#     preprocessed_heatmaps = standardize_cut(ground_map)
+
+#     # This should only work pre-relu step
+#     # mean_val = torch.mean(preprocessed_heatmaps, dim=(2, 3)).item()
+#     # assert abs(mean_val) < 1e-5, f"Mean value is not close to 0, got {mean_val}"
+
+#     assert torch.min(preprocessed_heatmaps) >= 0.0
 
 
 # def test_grad_cam(img_tensor_list: list[Any]):

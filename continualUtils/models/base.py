@@ -5,6 +5,7 @@ from typing import List, Optional, Union
 import safetensors
 import torch
 import torch.backends.cudnn
+import torch.nn.functional as F
 from avalanche.benchmarks import NCExperience
 from avalanche.models import MultiTaskModule
 from torch import nn
@@ -163,6 +164,7 @@ class FrameworkClassificationModel(BaseModel):
         init_weights: bool = True,
         make_multihead: bool = False,
         classifier_name: Optional[str] = None,
+        patch_batch_norm: bool = True,
     ) -> None:
         super().__init__(
             device=device,
@@ -170,6 +172,7 @@ class FrameworkClassificationModel(BaseModel):
             output_hidden=output_hidden,
             num_classes_per_task=num_classes_per_task,
             init_weights=init_weights,
+            patch_batch_norm=patch_batch_norm,
         )
 
         if make_multihead:
@@ -182,39 +185,61 @@ class FrameworkClassificationModel(BaseModel):
             self.model = model
 
     def _save_weights_impl(self, dir_name):
+        # Create the directory if it doesn't exist
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+
         # Check if the model has a 'save_pretrained' method
         if hasattr(self.model, "save_pretrained"):
-            # Create the directory if it doesn't exist
-            if not os.path.exists(dir_name):
-                os.makedirs(dir_name)
-
             # Save the model
             self.model.save_pretrained(
                 dir_name, state_dict=self.model.state_dict()
             )
-            print(f"\nModel saved in directory: {dir_name}")
+
         else:
-            raise AttributeError(
-                "\nThe provided model does not have a 'save_pretrained' method."
-            )
+            # Construct the path to save the .safetensors file
+            file_path = os.path.join(dir_name, "model.safetensors")
+
+            # Save the model state dictionary using safeTensors
+            safetensors.torch.save_model(self.model, file_path)
+
+        print(f"\nModel saved in directory: {dir_name}")
 
     def _load_weights_impl(self, dir_name):
-        print(f"Loading from {dir_name}")
+        print(f"Loading model from {dir_name}")
 
-        # Construct the path to the .safetensors file
-        file_path = os.path.join(dir_name, "model.safetensors")
+        # Path for the safetensors file
+        safetensors_file = os.path.join(dir_name, "model.safetensors")
 
-        # Check if the .safetensors file exists
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"The file {file_path} does not exist.")
+        if not os.path.exists(safetensors_file):
+            raise FileNotFoundError(
+                f"The file {safetensors_file} does not exist."
+            )
 
-        # Load the model state dictionary using safeTensors
-        state_dict = safetensors.torch.load_file(
-            file_path, device=str(self.device)
-        )
+        try:
+            # Try loading the state_dict using safetensors
+            state_dict = safetensors.torch.load_file(
+                safetensors_file, device=str(self.device)
+            )
+            self.model.load_state_dict(state_dict, strict=True)
+            print(f"Model state dictionary loaded from {safetensors_file}")
+        except:
+            pass
 
-        # Load the state_dict into the existing model architecture
-        self.model.load_state_dict(state_dict, strict=True)
+        try:
+            # Try loading the entire model using safetensors
+            missing, unexpected = safetensors.torch.load_model(
+                self.model, safetensors_file, strict=False
+            )
+            print(
+                f"""Entire model loaded from {safetensors_file},
+                missing {missing} and unexpected {unexpected}
+                """
+            )
+        except:
+            pass
+
+        raise FileExistsError("Failed to load the entire model")
 
     def forward(
         self, x: torch.Tensor, task_labels: Optional[torch.Tensor] = None

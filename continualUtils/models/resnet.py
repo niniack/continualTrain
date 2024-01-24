@@ -1,4 +1,5 @@
 import torch
+from torchvision.models import resnet18
 from transformers import ResNetConfig, ResNetForImageClassification
 
 from continualUtils.models import FrameworkClassificationModel
@@ -71,6 +72,34 @@ class PretrainedResNet50(PretrainedResNet):
         )
 
 
+class CustomTorchVisionResNet(FrameworkClassificationModel):
+    def __init__(
+        self,
+        device: torch.device,
+        num_classes_per_task: int,
+        init_weights: bool = False,
+        make_multihead: bool = False,
+        patch_batch_norm: bool = True,
+    ):
+        _model = resnet18()
+
+        classifier_name = "fc"
+
+        super().__init__(
+            model=_model,
+            device=device,
+            num_classes_per_task=num_classes_per_task,
+            output_hidden=False,
+            init_weights=init_weights,
+            make_multihead=make_multihead,
+            classifier_name=classifier_name,
+            patch_batch_norm=patch_batch_norm,
+        )
+
+    def forward(self, x, *args, **kwargs):
+        return self.model(x)
+
+
 class CustomResNet(FrameworkClassificationModel):
     """Custom ResNet built with HuggingFace."""
 
@@ -80,8 +109,9 @@ class CustomResNet(FrameworkClassificationModel):
         configuration: ResNetConfig,
         num_classes_per_task: int,
         output_hidden: bool = False,
-        init_weights: bool = True,
+        init_weights: bool = False,
         make_multihead: bool = False,
+        patch_batch_norm: bool = True,
     ):
         _model = ResNetForImageClassification(configuration)
 
@@ -95,6 +125,7 @@ class CustomResNet(FrameworkClassificationModel):
             init_weights=init_weights,
             make_multihead=make_multihead,
             classifier_name=classifier_name,
+            patch_batch_norm=patch_batch_norm,
         )
 
         self._hidden_layers = [
@@ -107,9 +138,7 @@ class CustomResNet(FrameworkClassificationModel):
 
 
 class CustomResNet18(CustomResNet):
-    """Resnet 18 model as
-    described in https://arxiv.org/pdf/2007.07400.pdf
-    """
+    """Resnet 18 model"""
 
     def __init__(
         self,
@@ -117,17 +146,18 @@ class CustomResNet18(CustomResNet):
         num_classes_per_task: int,
         output_hidden: bool = False,
         make_multihead: bool = False,
+        patch_batch_norm: bool = True,
     ):
         # Initializing a model (with random weights) from
         # the resnet-50 style configuration
         configuration = ResNetConfig(
             num_channels=3,
-            embedding_size=32,
-            hidden_sizes=[32, 64, 128, 256],
+            embedding_size=64,
+            hidden_sizes=[64, 128, 256, 512],
             depths=[2, 2, 2, 2],
             layer_type="basic",
             hidden_act="relu",
-            downsample_in_first_stage=True,
+            downsample_in_first_stage=False,
             num_labels=num_classes_per_task,
         )
 
@@ -137,8 +167,8 @@ class CustomResNet18(CustomResNet):
             configuration=configuration,
             output_hidden=output_hidden,
             num_classes_per_task=num_classes_per_task,
-            init_weights=True,
             make_multihead=make_multihead,
+            patch_batch_norm=patch_batch_norm,
         )
 
 
@@ -151,6 +181,7 @@ class CustomResNet50(CustomResNet):
         num_classes_per_task: int,
         output_hidden: bool = False,
         make_multihead: bool = False,
+        patch_batch_norm: bool = True,
     ):
         """
         Returns:
@@ -176,6 +207,6 @@ class CustomResNet50(CustomResNet):
             configuration=configuration,
             output_hidden=output_hidden,
             num_classes_per_task=num_classes_per_task,
-            init_weights=True,
             make_multihead=make_multihead,
+            patch_batch_norm=patch_batch_norm,
         )

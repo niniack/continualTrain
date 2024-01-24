@@ -1,4 +1,6 @@
 from continualUtils.explain.harmonizer_plugin import *
+from continualUtils.explain.lwm_plugin import *
+from continualUtils.explain.sgt_plugin import *
 
 # This is the logic/hierarchy for the strategy
 # train

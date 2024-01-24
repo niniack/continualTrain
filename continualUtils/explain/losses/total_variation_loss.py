@@ -1,4 +1,7 @@
-class TotalVariationLoss:
+from avalanche.training.regularization import RegularizationMethod
+
+
+class TotalVariationLoss(RegularizationMethod):
     """
     Computes total variation loss. Adapted from:
     https://kornia.readthedocs.io/en/latest/_modules/kornia/losses/total_variation.html
@@ -11,7 +14,10 @@ class TotalVariationLoss:
     reduction method ('mean' or 'sum').
     """
 
-    def __call__(self, img, reduction="mean"):
+    def update(self, *args, **kwargs):
+        pass
+
+    def __call__(self, *args, img, reduction="mean", **kwargs):
         # Calculate the difference between adjacent pixels along the height (axis -2)
         pixel_dif1 = img[..., 1:, :] - img[..., :-1, :]
         # Calculate the difference between adjacent pixels along the width (axis -1)

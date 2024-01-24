@@ -65,11 +65,63 @@ def test_deit(device, split_tiny_imagenet):
     assert output.shape == (1, 1000)
 
 
-def test_save_load(device, tmpdir):
+def test_save_load_huggingface(device, tmpdir):
     model = CustomResNet50(
         device=device,
         num_classes_per_task=10,
         make_multihead=True,
+    )
+
+    pre_state_dict = model.state_dict()
+
+    model.save_weights(f"{tmpdir}/model")
+
+    model.load_weights(f"{tmpdir}/model")
+
+    post_state_dict = model.state_dict()
+
+    # Function to compare two state dictionaries
+    def compare_state_dicts(dict1, dict2):
+        for key in dict1:
+            # Check if key is present in both dictionaries
+            if key not in dict2:
+                print(f"Key '{key}' not found in second dictionary")
+                return False
+
+            # Check if both values are tensors
+            if torch.is_tensor(dict1[key]) and torch.is_tensor(dict2[key]):
+                # Check if tensors are on the same device
+                if dict1[key].device != dict2[key].device:
+                    print(
+                        f"Tensor '{key}' is on different devices: {dict1[key].device} and {dict2[key].device}"
+                    )
+                    return False
+
+                # Check if tensor values are equal
+                if not torch.equal(dict1[key], dict2[key]):
+                    print(f"Mismatch in values for key '{key}':")
+                    print("First dict tensor:", dict1[key])
+                    print("Second dict tensor:", dict2[key])
+                    return False
+            else:
+                # Check non-tensor values
+                if dict1[key] != dict2[key]:
+                    print(
+                        f"Mismatch in non-tensor values for key '{key}': {dict1[key]} and {dict2[key]}"
+                    )
+                    return False
+
+        return True
+
+    # Assert that the two state dictionaries are the same
+    assert compare_state_dicts(pre_state_dict, post_state_dict)
+
+
+def test_save_load_custom(device, tmpdir):
+    model = SimpleMNISTCNN(
+        device=device,
+        num_classes_per_task=10,
+        make_multihead=False,
     )
 
     pre_state_dict = model.state_dict()

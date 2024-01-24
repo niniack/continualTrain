@@ -42,7 +42,9 @@ def split_permuted_mnist():
 
 @pytest.fixture
 def split_mnist():
-    split_mnist = SplitMNIST(n_experiences=5)
+    split_mnist = SplitMNIST(
+        n_experiences=5, dataset_root="/mnt/datasets/mnist"
+    )
     return split_mnist
 
 
