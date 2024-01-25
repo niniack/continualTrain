@@ -71,19 +71,17 @@ class _AlexNet(nn.Module):
 class AlexNet(FrameworkClassificationModel):
     def __init__(
         self,
-        device: torch.device,
         num_classes_per_task: int,
         output_hidden: bool = False,
         make_multihead: bool = False,
         init_weights: bool = False,
         patch_batch_norm: bool = False,
     ):
-        _model = _AlexNet(num_classes=num_classes_per_task)
         classifier_name = "fc_layer"
+        model = _AlexNet(num_classes=num_classes_per_task)
 
         super().__init__(
-            model=_model,
-            device=device,
+            model=model,
             num_classes_per_task=num_classes_per_task,
             output_hidden=output_hidden,
             init_weights=init_weights,

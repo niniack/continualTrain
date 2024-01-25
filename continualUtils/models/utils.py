@@ -5,9 +5,8 @@ from avalanche.models.dynamic_modules import (
     MultiTaskModule,
 )
 
+
 # These methods are adapted from Avalanche to extend compatibility
-
-
 class MultiTaskDecorator(MultiTaskModule):
     """
     Encapsulates an existing nn.Module to make it subclass MultiTaskModule,

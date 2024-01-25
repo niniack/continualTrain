@@ -163,23 +163,21 @@ class _WideResNet(nn.Module):
 class CustomWideResNet(FrameworkClassificationModel):
     def __init__(
         self,
-        device: torch.device,
         num_classes_per_task: int,
         output_hidden: bool = False,
-        init_weights: bool = False,
         make_multihead: bool = False,
-        patch_batch_norm: bool = True,
+        init_weights: bool = False,
+        patch_batch_norm: bool = False,
     ):
         _model = _WideResNet(num_classes=num_classes_per_task)
         classifier_name = "fc"
 
         super().__init__(
             model=_model,
-            device=device,
             num_classes_per_task=num_classes_per_task,
             output_hidden=output_hidden,
             init_weights=init_weights,
             make_multihead=make_multihead,
-            classifier_name=classifier_name,
             patch_batch_norm=patch_batch_norm,
+            classifier_name=classifier_name,
         )

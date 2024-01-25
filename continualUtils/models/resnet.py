@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import torch
 from torchvision.models import resnet18
 from transformers import ResNetConfig, ResNetForImageClassification
@@ -21,9 +23,8 @@ class PretrainedResNet(FrameworkClassificationModel):
         super().__init__(
             model=_model,
             device=device,
-            num_classes_per_task=1000,
             output_hidden=output_hidden,
-            init_weights=False,
+            num_classes_per_task=1000,
         )
 
 
@@ -32,11 +33,9 @@ class PretrainedResNet18(PretrainedResNet):
 
     def __init__(
         self,
-        device: torch.device,
         output_hidden: bool = False,
     ):
         super().__init__(
-            device=device,
             resnet="microsoft/resnet-18",
             output_hidden=output_hidden,
         )
@@ -47,11 +46,9 @@ class PretrainedResNet34(PretrainedResNet):
 
     def __init__(
         self,
-        device: torch.device,
         output_hidden: bool = False,
     ):
         super().__init__(
-            device=device,
             resnet="microsoft/resnet-34",
             output_hidden=output_hidden,
         )
@@ -62,7 +59,6 @@ class PretrainedResNet50(PretrainedResNet):
 
     def __init__(
         self,
-        device: torch.device,
         output_hidden: bool = False,
     ):
         super().__init__(
@@ -72,60 +68,30 @@ class PretrainedResNet50(PretrainedResNet):
         )
 
 
-class CustomTorchVisionResNet(FrameworkClassificationModel):
-    def __init__(
-        self,
-        device: torch.device,
-        num_classes_per_task: int,
-        init_weights: bool = False,
-        make_multihead: bool = False,
-        patch_batch_norm: bool = True,
-    ):
-        _model = resnet18()
-
-        classifier_name = "fc"
-
-        super().__init__(
-            model=_model,
-            device=device,
-            num_classes_per_task=num_classes_per_task,
-            output_hidden=False,
-            init_weights=init_weights,
-            make_multihead=make_multihead,
-            classifier_name=classifier_name,
-            patch_batch_norm=patch_batch_norm,
-        )
-
-    def forward(self, x, *args, **kwargs):
-        return self.model(x)
-
-
+@dataclass
 class CustomResNet(FrameworkClassificationModel):
     """Custom ResNet built with HuggingFace."""
 
     def __init__(
         self,
-        device: torch.device,
         configuration: ResNetConfig,
         num_classes_per_task: int,
         output_hidden: bool = False,
         init_weights: bool = False,
-        make_multihead: bool = False,
         patch_batch_norm: bool = True,
+        make_multihead: bool = False,
     ):
         _model = ResNetForImageClassification(configuration)
-
         classifier_name = "classifier"
 
         super().__init__(
             model=_model,
-            device=device,
-            num_classes_per_task=num_classes_per_task,
             output_hidden=output_hidden,
             init_weights=init_weights,
-            make_multihead=make_multihead,
-            classifier_name=classifier_name,
             patch_batch_norm=patch_batch_norm,
+            num_classes_per_task=num_classes_per_task,
+            classifier_name=classifier_name,
+            make_multihead=make_multihead,
         )
 
         self._hidden_layers = [
@@ -142,14 +108,14 @@ class CustomResNet18(CustomResNet):
 
     def __init__(
         self,
-        device: torch.device,
         num_classes_per_task: int,
         output_hidden: bool = False,
         make_multihead: bool = False,
-        patch_batch_norm: bool = True,
+        init_weights: bool = False,
+        patch_batch_norm: bool = False,
     ):
         # Initializing a model (with random weights) from
-        # the resnet-50 style configuration
+        # the resnet-18 style configuration
         configuration = ResNetConfig(
             num_channels=3,
             embedding_size=64,
@@ -161,14 +127,13 @@ class CustomResNet18(CustomResNet):
             num_labels=num_classes_per_task,
         )
 
-        _model = ResNetForImageClassification(configuration)
         super().__init__(
-            device=device,
             configuration=configuration,
-            output_hidden=output_hidden,
             num_classes_per_task=num_classes_per_task,
-            make_multihead=make_multihead,
+            output_hidden=output_hidden,
+            init_weights=init_weights,
             patch_batch_norm=patch_batch_norm,
+            make_multihead=make_multihead,
         )
 
 
@@ -177,17 +142,12 @@ class CustomResNet50(CustomResNet):
 
     def __init__(
         self,
-        device: torch.device,
         num_classes_per_task: int,
         output_hidden: bool = False,
         make_multihead: bool = False,
-        patch_batch_norm: bool = True,
+        init_weights: bool = False,
+        patch_batch_norm: bool = False,
     ):
-        """
-        Returns:
-            Resnet50 model
-        """
-
         # Initializing a model (with random weights) from
         # the resnet-50 style configuration
         configuration = ResNetConfig(
@@ -201,12 +161,11 @@ class CustomResNet50(CustomResNet):
             num_labels=num_classes_per_task,
         )
 
-        _model = ResNetForImageClassification(configuration)
         super().__init__(
-            device=device,
             configuration=configuration,
-            output_hidden=output_hidden,
             num_classes_per_task=num_classes_per_task,
-            make_multihead=make_multihead,
+            output_hidden=output_hidden,
+            init_weights=init_weights,
             patch_batch_norm=patch_batch_norm,
+            make_multihead=make_multihead,
         )

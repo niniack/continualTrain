@@ -1,6 +1,8 @@
+import functools
 import os
 from abc import ABC, abstractmethod
-from typing import List, Optional, Union
+from dataclasses import dataclass, fields, is_dataclass
+from typing import Any, List, Optional, Union
 
 import safetensors
 import torch
@@ -9,47 +11,51 @@ import torch.nn.functional as F
 from avalanche.benchmarks import NCExperience
 from avalanche.models import MultiTaskModule
 from torch import nn
+from typing_extensions import Self
 
 from continualUtils.models.utils import as_multitask
 
 
+def super_init_wrapper(cls):
+    """
+    Decorator for a dataclass to ensure super().__init__() is called in the generated __init__.
+    """
+    if not is_dataclass(cls):
+        raise TypeError("super_init_wrapper can only be used on dataclasses")
+
+    original_init = cls.__init__
+
+    @functools.wraps(original_init)
+    def new_init(self, *args, **kwargs):
+        super(cls, self).__init__()
+        original_init(self, *args, **kwargs)
+
+    cls.__init__ = new_init
+    return cls
+
+
+@super_init_wrapper
+@dataclass(init=False, kw_only=True, eq=False)
 class BaseModel(ABC, torch.nn.Module):
     """Base model to be extended for continualTrain"""
 
-    def __init__(
-        self,
-        model: torch.nn.Module,
-        device: torch.device,
-        output_hidden: bool,
-        num_classes_per_task: int,
-        init_weights: bool = False,
-        patch_batch_norm: bool = True,
-    ) -> None:
-        super().__init__()
-        self.model = model
-        self.device = device
-        self.output_hidden = output_hidden
-        self.num_classes_per_task = num_classes_per_task
-        self.init_weights = init_weights
-        self.patch_batch_norm = patch_batch_norm
+    model: torch.nn.Module
+    output_hidden: bool = False
+    init_weights: bool = False
+    patch_batch_norm: bool = False
 
-        # Update the module in-place to not use running stats
-        # https://pytorch.org/functorch/stable/batch_norm.html
-        # NOTE: Be careful with this, saliency maps require the patch
+    def __post_init__(self) -> None:
         if self.patch_batch_norm:
             self._patch_batch_norm()
 
-        # Initialize weights with Kaiming init
         if self.init_weights:
             self._init_weights()
-
-        self.model.to(device)
 
     def _init_weights(self) -> None:
         """
         Applies the Kaiming Normal initialization to all weights in the model.
         """
-
+        print("Initializing weights...")
         for m in self.modules():
             if isinstance(m, (nn.Conv2d, nn.Linear)):
                 nn.init.kaiming_normal_(
@@ -63,6 +69,7 @@ class BaseModel(ABC, torch.nn.Module):
         Replace all BatchNorm modules with GroupNorm and
         apply weight normalization to all Conv2d layers.
         """
+        print("Patching batch norm...")
 
         def replace_bn_with_gn(module, module_path=""):
             for child_name, child_module in module.named_children():
@@ -80,10 +87,7 @@ class BaseModel(ABC, torch.nn.Module):
         # Apply the replacement function to the model
         replace_bn_with_gn(self.model)
 
-        # Move to device
-        self.model.to(self.device)
-
-    def _get_dir_name(self, parent_dir: str) -> None:
+    def _get_dir_name(self, parent_dir: str) -> str:
         """Get a directory name for consistency"""
         # Build a consistent directory name
         return f"{parent_dir}/{self.__class__.__name__}"
@@ -108,7 +112,7 @@ class BaseModel(ABC, torch.nn.Module):
         # Call model specific implementation
         self._save_weights_impl(dir_name)
 
-    def load_weights(self, parent_dir: str) -> None:
+    def load_weights(self, parent_dir: str, device) -> None:
         """Load model weights.
 
         :param parent_dir: Directory to find the model weights
@@ -117,32 +121,20 @@ class BaseModel(ABC, torch.nn.Module):
         dir_name = self._get_dir_name(parent_dir)
 
         # Call model specific implementation
-        self._load_weights_impl(dir_name)
-
-    def is_multihead(self):
-        """Returns True if the model is a multihead model."""
-        return isinstance(self.model, MultiTaskModule)
-
-    def adapt_model(self, experiences: Union[List[NCExperience], NCExperience]):
-        """Add task parameters to a model"""
-        if self.is_multihead():
-            if isinstance(experiences, NCExperience):
-                experiences = [experiences]
-            for exp in experiences:
-                self.multihead_classifier.adaptation(exp)
+        self._load_weights_impl(dir_name, device)
 
     @abstractmethod
     def _save_weights_impl(self, dir_name: str) -> None:
         pass
 
     @abstractmethod
-    def _load_weights_impl(self, dir_name: str) -> None:
+    def _load_weights_impl(self, dir_name: str, device) -> None:
         pass
 
     @abstractmethod
     def forward(
         self, x: torch.Tensor, task_labels: Optional[torch.Tensor] = None
-    ) -> None:
+    ) -> torch.Tensor:
         """Forward pass for the model
 
         :param x: _description_
@@ -151,40 +143,11 @@ class BaseModel(ABC, torch.nn.Module):
         pass
 
 
-class FrameworkClassificationModel(BaseModel):
-    """Extend the base model to make it usable with continualTrain.
-    Classification models should inherit from this."""
+@dataclass(init=False, kw_only=True, eq=False)
+class FrameworkModel(BaseModel):
+    """Extends the base model to add in saving/loading methods continualTrain."""
 
-    def __init__(
-        self,
-        model: torch.nn.Module,
-        device: torch.device,
-        num_classes_per_task: int,
-        output_hidden: bool = False,
-        init_weights: bool = True,
-        make_multihead: bool = False,
-        classifier_name: Optional[str] = None,
-        patch_batch_norm: bool = True,
-    ) -> None:
-        super().__init__(
-            device=device,
-            model=model,
-            output_hidden=output_hidden,
-            num_classes_per_task=num_classes_per_task,
-            init_weights=init_weights,
-            patch_batch_norm=patch_batch_norm,
-        )
-
-        if make_multihead:
-            if classifier_name is None:
-                raise ValueError(
-                    "A classifier name must be provided to build a MultiTask module."
-                )
-            self.model = as_multitask(model, classifier_name)
-        else:
-            self.model = model
-
-    def _save_weights_impl(self, dir_name):
+    def _save_weights_impl(self, dir_name) -> None:
         # Create the directory if it doesn't exist
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
@@ -205,7 +168,7 @@ class FrameworkClassificationModel(BaseModel):
 
         print(f"\nModel saved in directory: {dir_name}")
 
-    def _load_weights_impl(self, dir_name):
+    def _load_weights_impl(self, dir_name, device) -> None:
         print(f"Loading model from {dir_name}")
 
         # Path for the safetensors file
@@ -216,34 +179,71 @@ class FrameworkClassificationModel(BaseModel):
                 f"The file {safetensors_file} does not exist."
             )
 
+        # Try to load the state with safetensors
+        # Uses strict mode
         try:
             # Try loading the state_dict using safetensors
             state_dict = safetensors.torch.load_file(
-                safetensors_file, device=str(self.device)
+                safetensors_file, device=device
             )
             self.model.load_state_dict(state_dict, strict=True)
             print(f"Model state dictionary loaded from {safetensors_file}")
         except:
             pass
 
+        # Try to load the entire model with safetensors
+        # Does not use strict mode
         try:
             # Try loading the entire model using safetensors
             missing, unexpected = safetensors.torch.load_model(
                 self.model, safetensors_file, strict=False
             )
+            self.model.to(device)
             print(
                 f"""Entire model loaded from {safetensors_file},
                 missing {missing} and unexpected {unexpected}
                 """
             )
         except:
-            pass
+            raise ValueError("Failed to load the model")
 
-        raise FileExistsError("Failed to load the entire model")
+
+@super_init_wrapper
+@dataclass(kw_only=True, eq=False)
+class FrameworkClassificationModel(FrameworkModel):
+    """Extends the framework model to make it usable with continualTrain.
+    Classification models should inherit from this."""
+
+    num_classes_per_task: int
+    classifier_name: Optional[str] = None
+    make_multihead: bool = False
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if self.make_multihead:
+            if self.classifier_name is None:
+                raise ValueError(
+                    "A classifier name must be provided to build a MultiTask module."
+                )
+            self.model = as_multitask(self.model, self.classifier_name)
+
+    def is_multihead(self) -> None:
+        """Returns True if the model is a multihead model."""
+        return isinstance(self.model, MultiTaskModule)
+
+    def adapt_model(
+        self, experiences: Union[List[NCExperience], NCExperience]
+    ) -> None:
+        """Add task parameters to a model"""
+        if self.is_multihead():
+            if isinstance(experiences, NCExperience):
+                experiences = [experiences]
+            for exp in experiences:
+                self.multihead_classifier.adaptation(exp)
 
     def forward(
         self, x: torch.Tensor, task_labels: Optional[torch.Tensor] = None
-    ) -> None:
+    ) -> torch.Tensor:
         """Forward pass for the model
 
         :param x: _description_
@@ -281,4 +281,57 @@ class FrameworkClassificationModel(BaseModel):
         if self.output_hidden:
             return out, hidden_states
 
+        return out
+
+
+@super_init_wrapper
+@dataclass(kw_only=True)
+class FrameworkMultiModalModel(FrameworkModel):
+    """Extends the framework model to make it usable with continualTrain.
+    Multimodal models should inherit from this."""
+
+    processor: torch.nn.Module
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+    def forward(
+        self,
+        images: torch.Tensor,
+        text: List[str],
+        task_labels: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        """Forward pass for the model
+
+        :param images: _description_
+        :param text: _description_
+        :param task_labels: _description_, defaults to None
+        :return: _description_
+        """
+
+        inputs = self.processor(
+            text=text,
+            images=images,
+            return_tensors="pt",
+            padding=True,
+        )
+
+        # Create a dictionary for the arguments
+        args = {
+            "output_hidden_states": self.output_hidden,
+            "return_dict": False,
+        }
+
+        out = self.model(**inputs, **args)
+        hidden_states = None
+        if isinstance(out, tuple):
+            out = out[0]
+        elif isinstance(out, dict) and "logits" in out:
+            out = out.get("hidden_states", None)
+            out = out["logits_per_image"]
+
+        if self.output_hidden:
+            raise NotImplementedError(
+                "Outputting hidden states not yet implemented"
+            )
         return out

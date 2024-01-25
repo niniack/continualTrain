@@ -10,6 +10,10 @@ from continualUtils.models import (
 )
 
 
+def test_clip(device, split_tiny_imagenet):
+    model
+
+
 def test_simple_cnn(device, split_mnist):
     model = SimpleMNISTCNN(
         device=device,
