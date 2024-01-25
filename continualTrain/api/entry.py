@@ -51,9 +51,17 @@ def initialize(
         )
     else:
         config_dict = {
-            key: "false" if "enable" in key else [] if "list" in key else ""
+            key: False if "enable" in key else [] if "list" in key else ""
             for key in REQUIRED_KEYS + OPTIONAL_KEYS
         }
+
+        config_dict["save_path"] = "./model_saves"
+        config_dict["dataset_path"] = "/mnt/datasets"
+        config_dict["training_dir"] = "./training"
+        config_dict["train_experiences"] = 1
+        config_dict["eval_experiences"] = 1
+        config_dict["wandb_api_key"] = "YOUR_WANDB_API_KEY"
+
         with config_file.open("w", encoding="utf-8") as cf:
             toml.dump(config_dict, cf)
 
