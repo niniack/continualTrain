@@ -68,7 +68,6 @@ class PretrainedResNet50(PretrainedResNet):
         )
 
 
-@dataclass
 class CustomResNet(FrameworkClassificationModel):
     """Custom ResNet built with HuggingFace."""
 
