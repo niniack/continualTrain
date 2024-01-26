@@ -54,7 +54,7 @@ class LRFinderScheduler(_LRScheduler):
         self.total_iterations = 0
 
 
-class CustomLRSchedulerPlugin(LRSchedulerPlugin):
+class LRFinderSchedulerPlugin(LRSchedulerPlugin):
     def before_training_exp(self, strategy, *args, **kwargs):
         # Compute dataset length
         num_samples_experience = len(strategy.experience.dataset)

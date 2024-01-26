@@ -4,14 +4,9 @@ from torch import Tensor, nn
 
 from continualUtils.models import (
     CustomResNet50,
-    PretrainedDeiTSmall,
     PretrainedResNet18,
     SimpleMNISTCNN,
 )
-
-
-def test_clip(device, split_tiny_imagenet):
-    model
 
 
 def test_simple_cnn(device, split_mnist):
@@ -176,11 +171,10 @@ def test_save_load_custom(device, tmpdir):
 def test_multihead(device, split_tiny_imagenet):
     """Tests multihead implementation"""
     model = CustomResNet50(
-        device=device,
         num_classes_per_task=10,
         make_multihead=True,
         output_hidden=False,
-    )
+    ).to(device)
 
     train_stream = split_tiny_imagenet.train_stream
     exp_set = train_stream[0].dataset
