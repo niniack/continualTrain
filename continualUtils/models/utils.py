@@ -115,11 +115,8 @@ class MultiTaskDecorator(MultiTaskModule):
         elif isinstance(out, dict) and "logits" in out:
             out = out["logits"]
             out = out.get("hidden_states", None)
-        return (
-            getattr(self, self.classifier_name)(
-                out.view(out.size(0), -1), task_labels=task_label
-            ),
-            hidden_states,
+        return getattr(self, self.classifier_name)(
+            out.view(out.size(0), -1), task_labels=task_label
         )
 
     def forward_all_tasks(self, x: torch.Tensor, *args, **kwargs):
@@ -139,11 +136,8 @@ class MultiTaskDecorator(MultiTaskModule):
         elif isinstance(out, dict) and "logits" in out:
             out = out["logits"]
             out = out.get("hidden_states", None)
-        return (
-            getattr(self, self.classifier_name)(
-                out.view(out.size(0), -1), task_labels=None
-            ),
-            hidden_states,
+        return getattr(self, self.classifier_name)(
+            out.view(out.size(0), -1), task_labels=None
         )
 
     def __getattr__(self, name):

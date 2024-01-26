@@ -81,7 +81,7 @@ class AlexNet(FrameworkClassificationModel):
         model = _AlexNet(num_classes=num_classes_per_task)
 
         super().__init__(
-            model=model,
+            _model=model,
             num_classes_per_task=num_classes_per_task,
             output_hidden=output_hidden,
             init_weights=init_weights,

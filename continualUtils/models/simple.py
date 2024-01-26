@@ -46,7 +46,7 @@ class SimpleMNISTCNN(FrameworkClassificationModel):
         classifier_name = "classifier"
 
         super().__init__(
-            model=_model,
+            _model=_model,
             num_classes_per_task=num_classes_per_task,
             output_hidden=output_hidden,
             init_weights=init_weights,

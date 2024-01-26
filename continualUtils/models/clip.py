@@ -16,7 +16,7 @@ class PretrainedCLIP(FrameworkMultiModalModel):
         output_hidden: bool = False,
     ):
         super().__init__(
-            model=clip_model,
+            _model=clip_model,
             processor=clip_processor,
             output_hidden=output_hidden,
         )

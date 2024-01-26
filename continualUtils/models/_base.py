@@ -39,7 +39,7 @@ def super_init_wrapper(cls):
 class BaseModel(ABC, torch.nn.Module):
     """Base model to be extended for continualTrain"""
 
-    model: torch.nn.Module
+    _model: torch.nn.Module
     output_hidden: bool = False
     init_weights: bool = False
     patch_batch_norm: bool = False
@@ -85,7 +85,7 @@ class BaseModel(ABC, torch.nn.Module):
                     replace_bn_with_gn(child_module, child_path)
 
         # Apply the replacement function to the model
-        replace_bn_with_gn(self.model)
+        replace_bn_with_gn(self._model)
 
     def _get_dir_name(self, parent_dir: str) -> str:
         """Get a directory name for consistency"""
@@ -153,10 +153,10 @@ class FrameworkModel(BaseModel):
             os.makedirs(dir_name)
 
         # Check if the model has a 'save_pretrained' method
-        if hasattr(self.model, "save_pretrained"):
+        if hasattr(self._model, "save_pretrained"):
             # Save the model
-            self.model.save_pretrained(
-                dir_name, state_dict=self.model.state_dict()
+            self._model.save_pretrained(
+                dir_name, state_dict=self._model.state_dict()
             )
 
         else:
@@ -164,7 +164,7 @@ class FrameworkModel(BaseModel):
             file_path = os.path.join(dir_name, "model.safetensors")
 
             # Save the model state dictionary using safeTensors
-            safetensors.torch.save_model(self.model, file_path)
+            safetensors.torch.save_model(self._model, file_path)
 
         print(f"\nModel saved in directory: {dir_name}")
 
@@ -186,7 +186,7 @@ class FrameworkModel(BaseModel):
             state_dict = safetensors.torch.load_file(
                 safetensors_file, device=device
             )
-            self.model.load_state_dict(state_dict, strict=True)
+            self._model.load_state_dict(state_dict, strict=True)
             print(f"Model state dictionary loaded from {safetensors_file}")
         except:
             pass
@@ -196,9 +196,9 @@ class FrameworkModel(BaseModel):
         try:
             # Try loading the entire model using safetensors
             missing, unexpected = safetensors.torch.load_model(
-                self.model, safetensors_file, strict=False
+                self._model, safetensors_file, strict=False
             )
-            self.model.to(device)
+            self._model.to(device)
             print(
                 f"""Entire model loaded from {safetensors_file},
                 missing {missing} and unexpected {unexpected}
@@ -210,7 +210,7 @@ class FrameworkModel(BaseModel):
 
 @super_init_wrapper
 @dataclass(kw_only=True, eq=False)
-class FrameworkClassificationModel(FrameworkModel):
+class FrameworkClassificationModel(FrameworkModel, MultiTaskModule):
     """Extends the framework model to make it usable with continualTrain.
     Classification models should inherit from this."""
 
@@ -225,11 +225,11 @@ class FrameworkClassificationModel(FrameworkModel):
                 raise ValueError(
                     "A classifier name must be provided to build a MultiTask module."
                 )
-            self.model = as_multitask(self.model, self.classifier_name)
+            self._model = as_multitask(self._model, self.classifier_name)
 
     def is_multihead(self) -> None:
         """Returns True if the model is a multihead model."""
-        return isinstance(self.model, MultiTaskModule)
+        return isinstance(self._model, MultiTaskModule)
 
     def adapt_model(
         self, experiences: Union[List[NCExperience], NCExperience]
@@ -267,9 +267,9 @@ class FrameworkClassificationModel(FrameworkModel):
         # Add the optional argument if the condition is met
         if self.is_multihead():
             args["task_labels"] = task_labels
-            out, hidden_states = self.model(x, **args)
+            out = self._model(x, **args)
         else:
-            out = self.model(x, **args)
+            out = self._model(x, **args)
             hidden_states = None
             if isinstance(out, tuple):
                 hidden_states = out[1] if len(out) > 1 else None
@@ -322,7 +322,7 @@ class FrameworkMultiModalModel(FrameworkModel):
             "return_dict": False,
         }
 
-        out = self.model(**inputs, **args)
+        out = self._model(**inputs, **args)
         hidden_states = None
         if isinstance(out, tuple):
             out = out[0]

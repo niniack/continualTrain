@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 import torch
-from torchvision.models import resnet18
 from transformers import ResNetConfig, ResNetForImageClassification
 
 from continualUtils.models import FrameworkClassificationModel
@@ -14,17 +13,19 @@ class PretrainedResNet(FrameworkClassificationModel):
 
     def __init__(
         self,
-        device: torch.device,
         resnet: str,
         output_hidden: bool = False,
     ):
         _model = ResNetForImageClassification.from_pretrained(resnet)
 
         super().__init__(
-            model=_model,
-            device=device,
+            _model=_model,
             output_hidden=output_hidden,
+            init_weights=False,
+            patch_batch_norm=False,
             num_classes_per_task=1000,
+            classifier_name=None,
+            make_multihead=False,
         )
 
 
@@ -62,7 +63,6 @@ class PretrainedResNet50(PretrainedResNet):
         output_hidden: bool = False,
     ):
         super().__init__(
-            device=device,
             resnet="microsoft/resnet-50",
             output_hidden=output_hidden,
         )
@@ -84,7 +84,7 @@ class CustomResNet(FrameworkClassificationModel):
         classifier_name = "classifier"
 
         super().__init__(
-            model=_model,
+            _model=_model,
             output_hidden=output_hidden,
             init_weights=init_weights,
             patch_batch_norm=patch_batch_norm,
