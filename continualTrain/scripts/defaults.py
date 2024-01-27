@@ -1,4 +1,5 @@
 import pluggy
+import torch
 from avalanche.evaluation.metrics import accuracy_metrics
 from avalanche.training.plugins import EvaluationPlugin
 from torch.nn import CrossEntropyLoss
@@ -28,6 +29,18 @@ def get_optimizer(parameters):
 def get_scheduler(optimizer):
     """Dummy function to return None, in place of a scheduler"""
     return None
+
+
+@hookimpl
+def get_device(available_id: int):
+    """
+    The device (e.g., "cuda", "cpu") where training will take place.
+
+    :return: Device
+    """
+    return torch.device(
+        f"cuda:{available_id[0]}" if available_id is not None else "cpu"
+    )
 
 
 @hookimpl

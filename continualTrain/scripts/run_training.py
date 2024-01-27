@@ -133,9 +133,7 @@ def main():
     except RuntimeError as e:
         sys.exit(f"Error obtaining GPU: {e}")
 
-    device = torch.device(
-        f"cuda:{deviceID[0]}" if deviceID is not None else "cpu"
-    )
+    device = pm.hook.get_device(available_id=deviceID)
 
     # Verify model can save
     temp_model = pm.hook.get_model(device=device, seed=0)

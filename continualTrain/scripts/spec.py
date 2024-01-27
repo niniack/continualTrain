@@ -2,6 +2,7 @@ from typing import Callable, List, Optional, Tuple, Union
 
 import pluggy
 from avalanche.training.plugins import EvaluationPlugin, LRSchedulerPlugin
+from torch import device
 from torch.nn import Module
 from torch.optim.optimizer import Optimizer
 
@@ -34,6 +35,15 @@ def get_model(device: str, seed: int) -> Module:
     :param device: The device (e.g., "cuda", "cpu") where the model will be placed.
     :param seed: Random seed for model initialization.
     :return: A model object.
+    """
+
+
+@hookspec(firstresult=True)
+def get_device(available_id: int) -> Union[str, device]:
+    """
+    The device (e.g., "cuda", "cpu") where training will take place.
+
+    :return: Device
     """
 
 
