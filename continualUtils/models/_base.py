@@ -13,6 +13,7 @@ from avalanche.models import MultiTaskModule
 from torch import nn
 from typing_extensions import Self
 
+from continualUtils.models._patched_bn import PatchedBatchNorm2d
 from continualUtils.models.utils import as_multitask
 
 
@@ -66,12 +67,11 @@ class BaseModel(ABC, torch.nn.Module):
 
     def _patch_batch_norm(self) -> None:
         """
-        Replace all BatchNorm modules with GroupNorm and
-        apply weight normalization to all Conv2d layers.
+        Replace all BatchNorm modules
         """
         print("Patching batch norm...")
 
-        def replace_bn_with_gn(module, module_path=""):
+        def replace_bn(module, module_path=""):
             for child_name, child_module in module.named_children():
                 child_path = (
                     f"{module_path}.{child_name}" if module_path else child_name
@@ -82,10 +82,10 @@ class BaseModel(ABC, torch.nn.Module):
                     setattr(module, child_name, new_groupnorm)
 
                 else:
-                    replace_bn_with_gn(child_module, child_path)
+                    replace_bn(child_module, child_path)
 
         # Apply the replacement function to the model
-        replace_bn_with_gn(self._model)
+        replace_bn(self._model)
 
     def _get_dir_name(self, parent_dir: str) -> str:
         """Get a directory name for consistency"""
