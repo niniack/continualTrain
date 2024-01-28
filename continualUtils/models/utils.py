@@ -58,7 +58,15 @@ class MultiTaskDecorator(MultiTaskModule):
             )
 
         # Set new classifier and initialize to previous param values
-        setattr(self, classifier_name, MultiHeadClassifier(in_size, out_size))
+        setattr(
+            self,
+            classifier_name,
+            MultiHeadClassifier(
+                in_size,
+                out_size,
+                masking=False,
+            ),
+        )
 
         for param, param_old in zip(
             getattr(self, classifier_name).parameters(), old_params
