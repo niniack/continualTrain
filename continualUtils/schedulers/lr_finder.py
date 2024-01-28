@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Any, Union
 
 from avalanche.training.plugins import LRSchedulerPlugin
 from torch import Tensor

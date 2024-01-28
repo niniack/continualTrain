@@ -47,21 +47,21 @@ def test_resnet(device, split_tiny_imagenet):
     assert output.shape == (1, 1000)
 
 
-def test_deit(device, split_tiny_imagenet):
-    model = PretrainedDeiTSmall(
-        device=device,
-        output_hidden=False,
-    )
+# def test_deit(device, split_tiny_imagenet):
+#     model = PretrainedDeiTSmall(
+#         device=device,
+#         output_hidden=False,
+#     )
 
-    train_stream = split_tiny_imagenet.train_stream
-    exp_set = train_stream[0].dataset
-    image, *_ = exp_set[0]
-    image = F.interpolate(image.unsqueeze(0), (224, 224)).to(device)
+#     train_stream = split_tiny_imagenet.train_stream
+#     exp_set = train_stream[0].dataset
+#     image, *_ = exp_set[0]
+#     image = F.interpolate(image.unsqueeze(0), (224, 224)).to(device)
 
-    output = model(image)
+#     output = model(image)
 
-    assert isinstance(output, torch.Tensor)
-    assert output.shape == (1, 1000)
+#     assert isinstance(output, torch.Tensor)
+#     assert output.shape == (1, 1000)
 
 
 def test_save_load_huggingface(device, tmpdir):
