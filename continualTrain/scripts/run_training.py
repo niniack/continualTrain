@@ -273,7 +273,7 @@ def main():
                 "minibatch_size": cl_strategy.train_mb_size,
                 "epochs": cl_strategy.train_epochs,
                 "model_seed": model_seed,
-                "gpu_ID": deviceID[0],
+                "gpu_ID": device,
                 "model_class": type(model).__name__,
                 "optimizer_type": type(optimizer).__name__,
                 "experiences": int(benchmark.n_experiences),
