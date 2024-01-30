@@ -98,24 +98,34 @@ class SaliencyGuidedLoss(RegularizationMethod):
 
         return mb_x
 
-    def __call__(self, mb_x, mb_y, model, mb_output=None, *args, **kwargs):
+    def __call__(
+        self, mb_x, mb_y, mb_tasks, model, mb_output=None, *args, **kwargs
+    ):
+        """_summary_
+
+        :param mb_x: _description_
+        :param mb_y: _description_
+        :param mb_tasks: _description_
+        :param model: _description_
+        :param mb_output: _description_, defaults to None
+        :return: _description_
+        """
         batch, channels, height, width = mb_x.shape
         num_masked_features = int(self.features_dropped * height * width)
 
         # Build saliency map
-        # Take mean
         saliency_engine = Saliency(model)
         grads = (
-            saliency_engine.attribute(mb_x, mb_y, abs=False)
+            saliency_engine.attribute(
+                mb_x, mb_y, abs=False, additional_forward_args=mb_tasks
+            )
             .detach()
             .to(dtype=torch.float)
         )
 
+        # Take mean of map
         if self.mean_saliency:
             grads = grads.mean(dim=1, keepdim=True)
-
-        # if self.abs_grads:
-        #     grads = grads.abs()
 
         # Clone images
         temp_mb_x = mb_x.detach().clone()
@@ -153,8 +163,8 @@ class SaliencyGuidedLoss(RegularizationMethod):
         #             ]
         ################# AMIRA #################
 
+        # FIXME: This is broken
         # Add noise
-        # TODO: This is broken
         if self.add_noise:
             num_noisy_features = int(self.noisy_features * height * width)
             # Build and fill random masks
@@ -167,8 +177,8 @@ class SaliencyGuidedLoss(RegularizationMethod):
         masked_input = temp_mb_x.view(mb_x.shape).detach()
 
         # Feed into model
-        masked_output = F.log_softmax(model(masked_input), dim=1)
-        standard_output = mb_output if mb_output else model(mb_x)
+        masked_output = F.log_softmax(model(masked_input, mb_tasks), dim=1)
+        standard_output = mb_output if mb_output else model(mb_x, mb_tasks)
         standard_output = F.log_softmax(standard_output, dim=1)
 
         # KL Loss will be added to main loss

@@ -323,6 +323,3 @@ def saliency_map_samples_metrics(
             )
         )
     return plugins
-
-
-__all__ = ["saliency_map_samples_metrics", "SaliencyMapSamplePlugin"]

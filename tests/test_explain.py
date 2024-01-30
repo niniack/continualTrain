@@ -42,17 +42,16 @@ def test_sgt_loss(device):
     )
 
     model = PretrainedResNet18(
-        device=device,
         output_hidden=False,
-    )
+    ).to(device)
 
     train_stream = tiny_imagenet.train_stream
     exp_set = train_stream[0].dataset
-    image, label, *_ = exp_set[0]
+    image, label, task = exp_set[0]
     image = image.unsqueeze(0).to(device)
 
     temp_mb_x = image.requires_grad_(True)
-    loss = sgt(temp_mb_x, label, model)
+    loss = sgt(temp_mb_x, label, task, model)
     assert isinstance(loss, torch.Tensor)
     assert loss.item() > 0.0
 
