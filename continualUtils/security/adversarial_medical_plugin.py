@@ -1,3 +1,4 @@
+import torch.nn.functional as F
 import torchattacks
 from avalanche.training.plugins.strategy_plugin import SupervisedPlugin
 
@@ -5,8 +6,11 @@ from continualUtils.explain.losses import SaliencyGuidedLoss
 from continualUtils.security.losses import AdversarialAttackLoss
 
 
-class AdversarialSaliencyPlugin(SupervisedPlugin):
-    """Adversarial Saliency Guided Training plugin"""
+class MedicalAdversarialSaliency(SupervisedPlugin):
+    """
+    Adversarial Saliency Guided Training from the medical paper
+    https://arxiv.org/pdf/2209.04326.pdf
+    """
 
     def __init__(
         self,
@@ -31,39 +35,40 @@ class AdversarialSaliencyPlugin(SupervisedPlugin):
         # Clone the input for adversarial attack
         cloned_mb_x = strategy.mb_x.clone().detach()
 
-        # Generate advesarial examples
-        (
-            adversarial_loss,
-            adversarial_images,
-            adversarial_preds,
-        ) = self.attack_loss(
+        # Uses the `__call__` method
+        # NOTE: Calling saliency guided loss with adversarial examples
+        # and output of model from adversarial examples
+        _, masked_images = self.sg_loss(
             mb_x=cloned_mb_x,
             mb_y=strategy.mb_y,
             mb_tasks=strategy.mbatch[-1],
             model=strategy.model,
         )
 
-        # Turn on gradients for the adversarially attacked images
-        if adversarial_images.requires_grad is False:
-            adversarial_images.requires_grad_(True)
-
-        # Uses the `__call__` method
-        # NOTE: Calling saliency guided loss with adversarial examples
-        # and output of model from adversarial examples
-        sg_loss, _ = self.sg_loss(
-            mb_x=adversarial_images,
-            mb_y=adversarial_preds.argmax(dim=1),
+        _, adversarial_masked_images, _ = self.attack_loss(
+            mb_x=masked_images,
+            mb_y=strategy.mb_y,
             mb_tasks=strategy.mbatch[-1],
             model=strategy.model,
-            mb_output=adversarial_preds,
         )
 
-        # Turn off gradients
-        adversarial_images.requires_grad_(False)
+        # Feed into model
+        mb_tasks = strategy.mbatch[-1]
+        masked_output = F.log_softmax(
+            strategy.model(adversarial_masked_images, mb_tasks), dim=1
+        )
+        standard_output = F.log_softmax(strategy.mb_output, dim=1)
+
+        # KL Loss will be added to main loss
+        adversarial_loss = F.kl_div(
+            masked_output,
+            standard_output,
+            reduction="batchmean",
+            log_target=True,
+        )
 
         # Add the harmonizer loss
-        strategy.loss += adversarial_loss + sg_loss
-        strategy.saliency_guided_loss = sg_loss
+        strategy.loss += adversarial_loss
         strategy.adversarial_loss = adversarial_loss
 
     def after_training_exp(self, strategy, **kwargs):

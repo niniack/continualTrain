@@ -178,7 +178,9 @@ class SaliencyGuidedLoss(RegularizationMethod):
 
         # Feed into model
         masked_output = F.log_softmax(model(masked_input, mb_tasks), dim=1)
-        standard_output = mb_output if mb_output else model(mb_x, mb_tasks)
+        standard_output = (
+            mb_output if mb_output is not None else model(mb_x, mb_tasks)
+        )
         standard_output = F.log_softmax(standard_output, dim=1)
 
         # KL Loss will be added to main loss
@@ -189,4 +191,4 @@ class SaliencyGuidedLoss(RegularizationMethod):
             log_target=True,
         )
 
-        return kl_loss
+        return kl_loss, masked_input

@@ -57,7 +57,7 @@ class SaliencyGuidedPlugin(SupervisedPlugin):
             cloned_mb_x.requires_grad_(True)
 
         # Uses the `__call__` method
-        sg_loss = self.sg_loss(
+        sg_loss, _ = self.sg_loss(
             mb_x=cloned_mb_x,
             mb_y=strategy.mb_y,
             mb_tasks=strategy.mbatch[-1],
