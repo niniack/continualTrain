@@ -114,7 +114,7 @@ RUN poetry config installer.max-workers 10
 COPY poetry.lock poetry.lock
 COPY pyproject.toml pyproject.toml
 
-# RUN poetry lock --no-update
+RUN poetry lock --no-update
 
 # Install the heavy dependencies for continualTrain
 RUN --mount=type=cache,target=/root/.cache \
