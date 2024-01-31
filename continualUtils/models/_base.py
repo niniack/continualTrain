@@ -250,13 +250,14 @@ class FrameworkClassificationModel(FrameworkModel, MultiTaskModule):
         :param task_labels: _description_, defaults to None
         """
 
-        if not self.is_multihead() and task_labels:
-            raise ValueError(
-                """
-                This is not a multihead module. Check if task_labels 
-                are needed. If so, the model was initialized incorrectly.
-                """
-            )
+        ######### Unnecessary error #########
+        # if not self.is_multihead() and task_labels:
+        #     raise ValueError(
+        #         """
+        #         This is not a multihead module. Check if task_labels
+        #         are needed. If so, the model was initialized incorrectly.
+        #         """
+        #     )
 
         # Create a dictionary for the arguments
         args = {
