@@ -161,19 +161,21 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && apt-get update \
     && apt-get install -y sudo \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME
+    && chmod 0440 /etc/sudoers.d/$USERNAME \
     # Install curl and Python
-    # && apt-get install -y curl python3 python3-pip python3-venv
+    && apt-get install -y curl python3 python3-pip python3-venv
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 
+# Copy Python binaries and standard library from builder
+COPY --from=builder /usr/bin/ /usr/bin/
+COPY --from=builder /usr/lib/ /usr/lib/
 COPY --from=builder /usr/local /usr/local
-COPY --from=builder ${POETRY_HOME} ${POETRY_HOME}
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 # Symlink python 
-RUN rm -f /usr/bin/python && ln -s /usr/bin/python3 /usr/bin/python
+# RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
 COPY ../continualUtils /app/continualUtils
 ENV PYTHONPATH "${PYTHONPATH}:/app"
