@@ -239,7 +239,7 @@ class FrameworkClassificationModel(FrameworkModel, MultiTaskModule):
             if isinstance(experiences, NCExperience):
                 experiences = [experiences]
             for exp in experiences:
-                self._model.adaptation(exp)
+                self._model.classifier.adaptation(exp)
 
     def forward(
         self, x: torch.Tensor, task_labels: Optional[torch.Tensor] = None
