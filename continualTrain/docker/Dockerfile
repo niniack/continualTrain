@@ -165,6 +165,8 @@ RUN groupadd --gid $USER_GID $USERNAME \
     # Install curl and Python
     && apt-get install -y curl python3 python3-pip python3-venv
 
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH"
 
