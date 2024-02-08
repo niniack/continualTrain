@@ -3,7 +3,9 @@ import torch.nn.functional as F
 from torch import Tensor, nn
 
 from continualUtils.models import (
+    CustomDeiTSmall,
     CustomResNet50,
+    PretrainedDeiTSmall,
     PretrainedResNet18,
     SimpleMNISTCNN,
 )
@@ -31,10 +33,12 @@ def test_simple_cnn(device, split_mnist):
 
 
 def test_resnet(device, split_tiny_imagenet):
-    model = PretrainedResNet18(
-        device=device,
-        output_hidden=False,
-    )
+    """_summary_
+
+    :param device: _description_
+    :param split_tiny_imagenet: _description_
+    """
+    model = PretrainedResNet18(output_hidden=False).to(device)
 
     train_stream = split_tiny_imagenet.train_stream
     exp_set = train_stream[0].dataset
@@ -47,21 +51,38 @@ def test_resnet(device, split_tiny_imagenet):
     assert output.shape == (1, 1000)
 
 
-# def test_deit(device, split_tiny_imagenet):
-#     model = PretrainedDeiTSmall(
-#         device=device,
-#         output_hidden=False,
-#     )
+def test_custom_deit(device, split_tiny_imagenet):
 
-#     train_stream = split_tiny_imagenet.train_stream
-#     exp_set = train_stream[0].dataset
-#     image, *_ = exp_set[0]
-#     image = F.interpolate(image.unsqueeze(0), (224, 224)).to(device)
+    model = CustomDeiTSmall(
+        num_classes_per_task=1000,
+        output_hidden=False,
+        make_multihead=False,
+        init_weights=False,
+    ).to(device)
 
-#     output = model(image)
+    train_stream = split_tiny_imagenet.train_stream
+    exp_set = train_stream[0].dataset
+    image, *_ = exp_set[0]
+    image = F.interpolate(image.unsqueeze(0), (224, 224)).to(device)
 
-#     assert isinstance(output, torch.Tensor)
-#     assert output.shape == (1, 1000)
+    output = model(image)
+
+    assert isinstance(output, torch.Tensor)
+    assert output.shape == (1, 1000)
+
+
+def test_deit(device, split_tiny_imagenet):
+    model = PretrainedDeiTSmall(output_hidden=False).to(device)
+
+    train_stream = split_tiny_imagenet.train_stream
+    exp_set = train_stream[0].dataset
+    image, *_ = exp_set[0]
+    image = F.interpolate(image.unsqueeze(0), (224, 224)).to(device)
+
+    output = model(image)
+
+    assert isinstance(output, torch.Tensor)
+    assert output.shape == (1, 1000)
 
 
 def test_save_load_huggingface(device, tmpdir):

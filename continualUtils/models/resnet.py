@@ -1,6 +1,3 @@
-from dataclasses import dataclass
-
-import torch
 from transformers import ResNetConfig, ResNetForImageClassification
 
 from continualUtils.models import FrameworkClassificationModel
