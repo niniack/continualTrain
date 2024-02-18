@@ -8,7 +8,6 @@ class SaliencyGuidedPlugin(SupervisedPlugin):
 
     def __init__(
         self,
-        noisy_features,
         features_dropped,
         weight=1,
     ):
@@ -17,9 +16,6 @@ class SaliencyGuidedPlugin(SupervisedPlugin):
         self.sg_loss = SaliencyGuidedLoss(
             random_masking=True,
             features_dropped=features_dropped,
-            add_noise=True if noisy_features > 0 else False,
-            noise_mag=1e-1,
-            noisy_features=noisy_features,
         )
 
     def before_backward(self, strategy, **kwargs):

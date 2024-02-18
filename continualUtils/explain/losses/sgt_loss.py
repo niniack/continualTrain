@@ -18,24 +18,18 @@ class SaliencyGuidedLoss(RegularizationMethod):
         self,
         random_masking: bool = True,
         features_dropped: float = 0.5,
-        add_noise: bool = False,
-        noise_mag: float = 1e-1,
-        noisy_features: float = 0.1,
         abs_grads: bool = False,
         mean_saliency: bool = True,
     ):
         self.abs_grads = abs_grads
         self.random_masking = random_masking
-        self.noisy_features = noisy_features
         self.features_dropped = features_dropped
-        self.add_noise = add_noise
-        self.noise_mag = noise_mag
         self.mean_saliency = mean_saliency
 
     def update(self, *args, **kwargs):
         pass
 
-    def get_masks(self, num_masked_features, grads, noise=False):
+    def get_masks(self, num_masked_features, grads):
         # Get batch size and number of channels
         batch, channels, *_ = grads.shape
 
@@ -44,7 +38,7 @@ class SaliencyGuidedLoss(RegularizationMethod):
 
         # Get topk indices for each channel
         _, top_indices = torch.topk(
-            grads_reshaped, num_masked_features, dim=2, largest=noise
+            grads_reshaped, num_masked_features, dim=2, largest=False
         )
 
         # Initialize flat mask for each channel
@@ -60,7 +54,7 @@ class SaliencyGuidedLoss(RegularizationMethod):
 
         return mask
 
-    def fill_masks(self, mb_x, mb_masks, noise=False):
+    def fill_masks(self, mb_x, mb_masks):
         # Get input shape
         batch, channels, height, width = mb_x.shape
 
@@ -68,33 +62,27 @@ class SaliencyGuidedLoss(RegularizationMethod):
         if mb_masks.shape[1] != channels:
             mb_masks = mb_masks.expand(batch, channels, height, width)
 
-        if noise:
-            noise_values = torch.rand_like(mb_x) * (2e-1) - 1e-1
-            mb_x = torch.where(mb_masks, mb_x + noise_values, mb_x)
-        else:
-            # Get min and max for each channel, for each image
-            min_vals = (
-                mb_x.view(batch, channels, -1)
-                .min(dim=2)[0]
-                .unsqueeze(-1)
-                .unsqueeze(-1)
-            )
-            max_vals = (
-                mb_x.view(batch, channels, -1)
-                .max(dim=2)[0]
-                .unsqueeze(-1)
-                .unsqueeze(-1)
-            )
+        # Get min and max for each channel, for each image
+        min_vals = (
+            mb_x.view(batch, channels, -1)
+            .min(dim=2)[0]
+            .unsqueeze(-1)
+            .unsqueeze(-1)
+        )
+        max_vals = (
+            mb_x.view(batch, channels, -1)
+            .max(dim=2)[0]
+            .unsqueeze(-1)
+            .unsqueeze(-1)
+        )
 
-            # Build random values within range
-            random_values = (
-                torch.rand_like(mb_x) * (max_vals - min_vals)
-            ) + min_vals
+        # Build random values within range
+        random_values = (
+            torch.rand_like(mb_x) * (max_vals - min_vals)
+        ) + min_vals
 
-            # Replace with random values where indices are True
-            mb_x = torch.where(
-                condition=mb_masks, input=random_values, other=mb_x
-            )
+        # Replace with random values where indices are True
+        mb_x = torch.where(condition=mb_masks, input=random_values, other=mb_x)
 
         return mb_x
 
@@ -162,16 +150,6 @@ class SaliencyGuidedLoss(RegularizationMethod):
         #                 0, channel, 0, 0
         #             ]
         ################# AMIRA #################
-
-        # FIXME: This is broken
-        # Add noise
-        if self.add_noise:
-            num_noisy_features = int(self.noisy_features * height * width)
-            # Build and fill random masks
-            single_masks = self.get_masks(
-                num_noisy_features, grads.unsqueeze(1), noise=True
-            )
-            temp_mb_x = self.fill_masks(mb_x, single_masks, noise=True)
 
         # Reshape to original tensor
         masked_input = temp_mb_x.view(mb_x.shape).detach()
