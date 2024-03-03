@@ -15,7 +15,8 @@
 	],
 	"mounts": [
 		"source=/mnt,target=/mnt,type=bind",
-		"source=${localEnv:HOME}/datasets/,target=/root/datasets,type=bind"
+		"source=${localEnv:HOME}/datasets/,target=/root/datasets,type=bind",
+		"source=${localEnv:HOME}/git/,target=/root/git,type=bind"
 	],
 	"customizations": {
 		"vscode": {
@@ -24,16 +25,13 @@
 			},
 			"extensions": [
 				"ms-python.python",
-				"ms-python.vscode-pylance",
+				"ms-toolsai.jupyter",
 				"njpwerner.autodocstring",
-				"ms-python.black-formatter",
 				"tamasfe.even-better-toml",
-				"ms-python.isort",
-				"ms-python.pylint",
-				"ms-toolsai.jupyter"
+				"charliermarsh.ruff"
 			]
 		}
 	},
 	"remoteUser": "root", 
-	"postCreateCommand": "./.devcontainer/postCreate.sh"
+	"postCreateCommand": ".devcontainer/postCreate.sh"
 }

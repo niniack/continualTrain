@@ -67,25 +67,26 @@ ipykernel = "^6.26.0"
 barracks = "continualTrain.api.entry:app"
 devtest = "tests.run_tests:main"
 
-[tool.black]
-line-length = 80
-include = '\.pyi?$'
-
-[tool.isort]
-profile = "black"
-
-[tool.pytest.ini_options]
-filterwarnings = [
-    "ignore::DeprecationWarning"
-]
-log_cli = true
-
-[tool.pylint.main]
-generated-members = "torch.*, avalanche.*"
-disable = "c0114, r0913, w0212, e1101, e1102, w0105"
-
-
 [[tool.poetry.source]]
 name = "torch"
 url = "https://download.pytorch.org/whl/cu118"
 priority = "explicit"
+
+[tool.ruff]
+line-length = 80
+indent-width = 4
+target-version = "py310"
+# include = '\.pyi?$'
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
