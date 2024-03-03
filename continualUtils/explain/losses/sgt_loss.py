@@ -1,3 +1,5 @@
+from typing import Literal
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -16,15 +18,16 @@ class SaliencyGuidedLoss(RegularizationMethod):
 
     def __init__(
         self,
-        random_masking: bool = True,
         features_dropped: float = 0.5,
         abs_grads: bool = False,
         mean_saliency: bool = True,
+        mask_mode: Literal["original", "reversed", "random"] = "original",
     ):
         self.abs_grads = abs_grads
-        self.random_masking = random_masking
+        self.random_masking = True
         self.features_dropped = features_dropped
         self.mean_saliency = mean_saliency
+        self.mask_mode = mask_mode
 
     def update(self, *args, **kwargs):
         pass
@@ -37,17 +40,27 @@ class SaliencyGuidedLoss(RegularizationMethod):
         grads_reshaped = grads.view(batch, channels, -1)
 
         # Get topk indices for each channel
-        _, top_indices = torch.topk(
-            grads_reshaped, num_masked_features, dim=2, largest=False
-        )
+        match self.mask_mode:
+            case "original":
+                _, top_indices = torch.topk(
+                    grads_reshaped, num_masked_features, dim=-1, largest=False
+                )
+            case "reversed":
+                _, top_indices = torch.topk(
+                    grads_reshaped, num_masked_features, dim=-1, largest=True
+                )
 
         # Initialize flat mask for each channel
-        mask = torch.zeros_like(grads_reshaped, dtype=torch.bool)
+        mask = torch.zeros_like(
+            grads_reshaped, dtype=torch.bool, device=grads.device
+        )
 
         # Fill mask for each channel
-        image_idx = torch.arange(batch).unsqueeze(1).unsqueeze(2)
-        channel_idx = torch.arange(channels).unsqueeze(0).unsqueeze(2)
-        mask[image_idx, channel_idx, top_indices] = True
+        batch_indices = torch.arange(batch, device=grads.device)[:, None, None]
+        channel_indices = torch.arange(channels, device=grads.device)[
+            None, :, None
+        ]
+        mask[batch_indices, channel_indices, top_indices] = True
 
         # Reshape mask to original grad shape
         mask = mask.reshape(grads.shape)
@@ -69,6 +82,7 @@ class SaliencyGuidedLoss(RegularizationMethod):
             .unsqueeze(-1)
             .unsqueeze(-1)
         )
+
         max_vals = (
             mb_x.view(batch, channels, -1)
             .max(dim=2)[0]
@@ -98,31 +112,42 @@ class SaliencyGuidedLoss(RegularizationMethod):
         :param mb_output: _description_, defaults to None
         :return: _description_
         """
+        # Compute number of features
         batch, channels, height, width = mb_x.shape
         num_masked_features = int(self.features_dropped * height * width)
 
-        # Build saliency map
-        saliency_engine = Saliency(model)
-        grads = (
-            saliency_engine.attribute(
-                mb_x, mb_y, abs=False, additional_forward_args=mb_tasks
-            )
-            .detach()
-            .to(dtype=torch.float)
-        )
-
-        # Take mean of map
-        if self.mean_saliency:
-            grads = grads.mean(dim=1, keepdim=True)
-
         # Clone images
-        temp_mb_x = mb_x.detach().clone()
+        # temp_mb_x = mb_x.detach().clone()
+        temp_mb_x = mb_x
 
-        # Build boolean mask with top k salient features
-        single_masks = self.get_masks(num_masked_features, grads)
+        # Random feature selection
+        if self.mask_mode == "random":
+            single_masks = torch.rand(mb_x.shape, device=mb_x.device)
+            single_masks = single_masks < self.features_dropped
+
+        # Or, actually use saliency
+        else:
+            # Build saliency map
+            saliency_engine = Saliency(model)
+            grads = (
+                saliency_engine.attribute(
+                    mb_x,
+                    mb_y,
+                    abs=self.abs_grads,
+                    additional_forward_args=mb_tasks,
+                ).detach()
+                # .to(dtype=torch.float)
+            )
+
+            # Take mean of map
+            if self.mean_saliency:
+                grads = grads.mean(dim=1, keepdim=True)
+
+            # Build boolean mask with top k salient features
+            single_masks = self.get_masks(num_masked_features, grads)
 
         # Fill top k indices with random values
-        temp_mb_x = self.fill_masks(mb_x, single_masks)
+        temp_mb_x = self.fill_masks(temp_mb_x, single_masks)
 
         ################# AMIRA #################
         # indices = indices.view(batch, channels, num_masked_features)
