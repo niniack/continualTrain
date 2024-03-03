@@ -14,7 +14,8 @@ from torch.utils.data import TensorDataset
 from torchvision import transforms
 
 from continualUtils.benchmarks import SplitClickMe
-from continualUtils.models import PretrainedResNet18
+
+#################################### DEVICE ####################################
 
 # Define a condition for skipping
 skip_if_no_cuda = pytest.mark.skipif(
@@ -23,23 +24,53 @@ skip_if_no_cuda = pytest.mark.skipif(
 )
 
 
+# Device fixture
 @pytest.fixture
 def device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
+#################################### DEVICE ####################################
+
+#################################### MODELS ####################################
+
+
+# Pretrained fixture
 @pytest.fixture
-def pretrained_resnet18():
-    model = PretrainedResNet18(device=torch.device("cpu"))
+def pretrained_classifier(request, device):
+    model_class = request.param["model_class"]
+    model = model_class(output_hidden=False).to(device)
     return model
 
 
+# Custom multihead fixture
 @pytest.fixture
-def split_permuted_mnist():
-    perm_mnist = PermutedMNIST(n_experiences=2)
-    return perm_mnist
+def custom_multihead_classifier(
+    request, num_classes_per_task, make_multihead, device
+):
+    model_class = request.param["model_class"]
+    num_classes_per_task = num_classes_per_task
+    model = model_class(
+        num_classes_per_task=num_classes_per_task,
+        output_hidden=False,
+        make_multihead=make_multihead,
+    ).to(device)
+    return model
 
 
+# Simple MLP fixture
+@pytest.fixture
+def av_simple_mlp():
+    model = SimpleMLP(num_classes=10)
+    return model
+
+
+#################################### MODELS ####################################
+
+################################### DATASETS ###################################
+
+
+# Split MNIST 5 experience fixture
 @pytest.fixture
 def split_mnist():
     split_mnist = SplitMNIST(
@@ -48,11 +79,18 @@ def split_mnist():
     return split_mnist
 
 
+# Split Permuted MNIST 2 experience fixture
 @pytest.fixture
-def split_tiny_imagenet():
+def split_permuted_mnist():
+    perm_mnist = PermutedMNIST(n_experiences=2)
+    return perm_mnist
+
+
+@pytest.fixture
+def split_tiny_imagenet(request):
     # 200 classes
     split_tiny = SplitTinyImageNet(
-        n_experiences=20,
+        n_experiences=request.param["n_experiences"],
         dataset_root="/mnt/datasets/tinyimagenet",
         seed=42,
         return_task_id=True,
@@ -124,10 +162,9 @@ def img_tensor_dataset():
     return TensorDataset(tensor1, torch.Tensor([281]).long())
 
 
-@pytest.fixture
-def av_simple_mlp():
-    model = SimpleMLP(num_classes=10)
-    return model
+################################### DATASETS ###################################
+
+################################### LOGGING ####################################
 
 
 @pytest.fixture(scope="session")
@@ -137,3 +174,6 @@ def logger():
     pytest_logger.setLevel(logging.DEBUG)
 
     return pytest_logger
+
+
+################################### LOGGING ####################################

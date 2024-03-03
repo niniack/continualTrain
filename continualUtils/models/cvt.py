@@ -1,17 +1,17 @@
-from transformers import ViTConfig, ViTForImageClassification
+from transformers import CvtConfig, CvtForImageClassification
 
 from continualUtils.models import FrameworkClassificationModel
 
 
-class PretrainedDeiT(FrameworkClassificationModel):
-    """Pretrained DeiT from HuggingFace."""
+class PretrainedCvt(FrameworkClassificationModel):
+    """Pretrained Cvt from HuggingFace."""
 
     def __init__(
         self,
-        deit: str,
+        cvt: str,
         output_hidden: bool = False,
     ):
-        _model = ViTForImageClassification.from_pretrained(deit)
+        _model = CvtForImageClassification.from_pretrained(cvt)
 
         super().__init__(
             _model=_model,
@@ -24,10 +24,10 @@ class PretrainedDeiT(FrameworkClassificationModel):
         )
 
 
-class PretrainedDeiTSmall(PretrainedDeiT):
+class PretrainedCvt13(PretrainedCvt):
     """
-    Pretrained DeiT Small
-    https://huggingface.co/facebook/deit-small-patch16-224
+    Pretrained Cvt 13
+    https://huggingface.co/microsoft/cvt-13
     """
 
     def __init__(
@@ -35,23 +35,23 @@ class PretrainedDeiTSmall(PretrainedDeiT):
         output_hidden: bool = False,
     ):
         super().__init__(
-            deit="facebook/deit-small-patch16-224",
+            cvt="microsoft/cvt-13",
             output_hidden=output_hidden,
         )
 
 
-class CustomDeiT(FrameworkClassificationModel):
-    """Custom DeiT built with HuggingFace."""
+class CustomCvt(FrameworkClassificationModel):
+    """Custom Cvt built with HuggingFace."""
 
     def __init__(
         self,
-        configuration: ViTConfig,
+        configuration: CvtConfig,
         num_classes_per_task: int,
         output_hidden: bool = False,
         init_weights: bool = False,
         make_multihead: bool = False,
     ):
-        _model = ViTForImageClassification(configuration)
+        _model = CvtForImageClassification(configuration)
         classifier_name = "classifier"
 
         super().__init__(
@@ -65,8 +65,8 @@ class CustomDeiT(FrameworkClassificationModel):
         )
 
 
-class CustomDeiTSmall(CustomDeiT):
-    """Custom DeiT Small"""
+class CustomCvt13(CustomCvt):
+    """Custom Cvt 13"""
 
     def __init__(
         self,
@@ -75,22 +75,8 @@ class CustomDeiTSmall(CustomDeiT):
         make_multihead: bool = False,
         init_weights: bool = False,
     ):
-        configuration = ViTConfig(
+        configuration = CvtConfig(
             num_labels=num_classes_per_task,
-            hidden_size=384,
-            num_hidden_layers=12,
-            num_attention_heads=6,
-            intermediate_size=1536,
-            hidden_act="gelu",
-            hidden_dropout_prob=0.0,
-            attention_probs_dropout_prob=0.0,
-            initializer_range=0.02,
-            layer_norm_eps=1e-12,
-            image_size=224,
-            patch_size=16,
-            num_channel=3,
-            qkv_bias=True,
-            encoder_stride=16,
         )
 
         super().__init__(
@@ -102,4 +88,4 @@ class CustomDeiTSmall(CustomDeiT):
         )
 
 
-__all__ = ["PretrainedDeiTSmall", "CustomDeiTSmall"]
+__all__ = ["PretrainedCvt13", "CustomCvt13"]

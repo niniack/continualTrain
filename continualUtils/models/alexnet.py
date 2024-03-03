@@ -77,11 +77,11 @@ class AlexNet(FrameworkClassificationModel):
         init_weights: bool = False,
         patch_batch_norm: bool = False,
     ):
+        _model = _AlexNet(num_classes=num_classes_per_task)
         classifier_name = "fc_layer"
-        model = _AlexNet(num_classes=num_classes_per_task)
 
         super().__init__(
-            _model=model,
+            _model=_model,
             num_classes_per_task=num_classes_per_task,
             output_hidden=output_hidden,
             init_weights=init_weights,
@@ -89,3 +89,6 @@ class AlexNet(FrameworkClassificationModel):
             patch_batch_norm=patch_batch_norm,
             classifier_name=classifier_name,
         )
+
+
+__all__ = ["AlexNet"]

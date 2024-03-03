@@ -43,7 +43,7 @@ class SimpleMNISTCNN(FrameworkClassificationModel):
         patch_batch_norm: bool = False,
     ):
         _model = _Net(num_classes=num_classes_per_task)
-        classifier_name = "classifier"
+        classifier_name = "fc2"
 
         super().__init__(
             _model=_model,

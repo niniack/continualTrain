@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 import torch
 from transformers import CLIPModel, CLIPProcessor
 
@@ -37,3 +35,6 @@ class PretrainedCLIP_ViT_Base_Patch32(PretrainedCLIP):
             clip_processor=_processor,
             output_hidden=output_hidden,
         )
+
+
+__all__ = ["PretrainedCLIP_ViT_Base_Patch32"]

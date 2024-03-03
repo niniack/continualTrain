@@ -219,6 +219,24 @@ def main():
     # Collate function
     collate_fn = pm.hook.get_collate()
 
+    # PROFILER
+    if args.profile:
+        # Initialize the profiler
+        profiler = torch.profiler.profile(
+            activities=[
+                torch.profiler.ProfilerActivity.CPU,
+                torch.profiler.ProfilerActivity.CUDA,
+            ],
+            record_shapes=True,
+            with_stack=True,
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(
+                "/workspace/log_dir"
+            ),
+        )
+
+        # Start the profiler
+        profiler.start()
+
     # TRAINING
     for model_seed in MODEL_SEEDS:
         # Set up interactive logging
@@ -324,9 +342,11 @@ def main():
 
                 cl_strategy.train(
                     experience,
-                    eval_streams=[val_exp]
-                    if val_stream is not None
-                    else [test_stream[exp_id]],
+                    eval_streams=(
+                        [val_exp]
+                        if val_stream is not None
+                        else [test_stream[exp_id]]
+                    ),
                     num_workers=workers,
                     persistent_workers=True,
                     collate_fn=collate_fn,
@@ -364,6 +384,9 @@ def main():
 
         if args.use_wandb:
             wandb_logger.wandb.finish()
+
+    if args.profile:
+        profiler.stop()
 
 
 if __name__ == "__main__":

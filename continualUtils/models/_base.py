@@ -1,19 +1,16 @@
 import functools
 import os
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, fields, is_dataclass
-from typing import Any, List, Optional, Union
+from dataclasses import dataclass, is_dataclass
+from typing import List, Optional, Union
 
 import safetensors
 import torch
 import torch.backends.cudnn
-import torch.nn.functional as F
 from avalanche.benchmarks import NCExperience
 from avalanche.models import MultiTaskModule
 from torch import nn
-from typing_extensions import Self
 
-from continualUtils.models._patched_bn import PatchedBatchNorm2d
 from continualUtils.models.utils import as_multitask
 
 
@@ -336,3 +333,6 @@ class FrameworkMultiModalModel(FrameworkModel):
                 "Outputting hidden states not yet implemented"
             )
         return out
+
+
+__all__ = ["FrameworkMultiModalModel", "FrameworkClassificationModel"]

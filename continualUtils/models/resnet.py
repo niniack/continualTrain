@@ -4,9 +4,7 @@ from continualUtils.models import FrameworkClassificationModel
 
 
 class PretrainedResNet(FrameworkClassificationModel):
-    """Pretrained ResNet on Imagenet from HuggingFace.
-    It is assumed to be limited to 1K classes.
-    """
+    """Pretrained ResNet on Imagenet from HuggingFace."""
 
     def __init__(
         self,
@@ -27,7 +25,7 @@ class PretrainedResNet(FrameworkClassificationModel):
 
 
 class PretrainedResNet18(PretrainedResNet):
-    """Pretrained ResNet18"""
+    """Pretrained ResNet18 from Huggingface"""
 
     def __init__(
         self,
@@ -40,7 +38,7 @@ class PretrainedResNet18(PretrainedResNet):
 
 
 class PretrainedResNet34(PretrainedResNet):
-    """Pretrained ResNet34"""
+    """Pretrained ResNet34 from Huggingface"""
 
     def __init__(
         self,
@@ -53,7 +51,7 @@ class PretrainedResNet34(PretrainedResNet):
 
 
 class PretrainedResNet50(PretrainedResNet):
-    """Pretrained ResNet50"""
+    """Pretrained ResNet50 from Huggingface"""
 
     def __init__(
         self,
