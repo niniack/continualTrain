@@ -18,6 +18,7 @@ REQUIRED_KEYS = [
     "training_dir",
     "enable_wandb_logging",
     "wandb_api_key",
+    "save_frequency",
 ]
 
 OPTIONAL_KEYS = [
@@ -28,6 +29,7 @@ OPTIONAL_KEYS = [
     "enable_cuda_debug",
     "overlays_list",
     "enable_ffcv",
+    "valid_subdirs",
 ]
 
 

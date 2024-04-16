@@ -44,6 +44,12 @@ def parse_args():
         help="Path to save models",
     )
     parser.add_argument(
+        "--save_frequency",
+        type=int,
+        required=True,
+        help="Frequency to save models",
+    )
+    parser.add_argument(
         "--use_wandb", action="store_true", help="Uses WandB logging"
     )
     parser.add_argument(
@@ -52,12 +58,12 @@ def parse_args():
         help="Number of experiences to train on",
     )
     parser.add_argument(
-        "--enable_ffcv", action="store_true", help="Use FFCV for dataloading"
-    )
-    parser.add_argument(
         "--eval_experiences",
         type=int,
         help="Number of experiences to evaluate on",
+    )
+    parser.add_argument(
+        "--enable_ffcv", action="store_true", help="Use FFCV for dataloading"
     )
     parser.add_argument(
         "--exclude_gpus",
@@ -250,7 +256,7 @@ def main():
 
         # Set up Avalanche strategy plugins
         model_saver_plugin = ModelSaverPlugin(
-            save_frequency=10,
+            save_frequency=args.save_frequency,
             strategy_name=strategy_name,
             rand_uuid=rand_uuid,
             save_path=args.save_path,

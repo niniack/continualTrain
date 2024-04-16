@@ -25,9 +25,15 @@ def train(
     else:
         overlays_list = None
 
-    # Verify hook files
-    hook_impl_files = list(train_dir_path.glob("hook*.py"))
+    hook_impl_files = []
+    if "valid_subdirs" in config:
+        for subdir_name in config["valid_subdirs"]:
+            subdir_path = train_dir_path / subdir_name
+            hook_impl_files.extend(subdir_path.rglob("hook*.py"))
+    else:
+        hook_impl_files = list(train_dir_path.rglob("hook*.py"))
 
+    # Verify hook files
     if len(hook_impl_files) == 0:
         raise FileNotFoundError(
             """
@@ -48,15 +54,18 @@ def train(
         cmd_str = (
             f"PYTHONPATH=$PYTHONPATH:/training_dir &&"
             f"/app/.venv/bin/python /workspace/scripts/run_training.py "
-            f"/training_dir/{impl.name} "
+            f"/training_dir/{impl.relative_to(*impl.parts[:impl.parts.index('training')+1])} "
             f"--save_path /save"
         )
 
+        save_freq = config.get("save_frequency", 10)
+        cmd_str += f" --save_frequency {save_freq}"
+
         # Add optional arguments to the command string:
-        if config.get("enable_wandb_logging", True):
+        if config.get("enable_wandb_logging", False):
             cmd_str += " --use_wandb"
 
-        if config.get("enable_ffcv", True):
+        if config.get("enable_ffcv", False):
             cmd_str += " --enable_ffcv"
 
         if "train_experiences" in config:
