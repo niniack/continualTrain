@@ -335,4 +335,19 @@ class FrameworkMultiModalModel(FrameworkModel):
         return out
 
 
-__all__ = ["FrameworkMultiModalModel", "FrameworkClassificationModel"]
+class FrameworkClassificationInterface(FrameworkClassificationModel):
+    def __init__(
+        self,
+        num_classes_per_task: int,
+        output_hidden: bool = False,
+        make_multihead: bool = False,
+        init_weights: bool = False,
+    ):
+        raise NotImplementedError()
+
+
+__all__ = [
+    "FrameworkMultiModalModel",
+    "FrameworkClassificationModel",
+    "FrameworkClassificationInterface",
+]

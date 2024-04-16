@@ -1,5 +1,6 @@
 from continualUtils.models._base import *
 from continualUtils.models.alexnet import *
+from continualUtils.models.cifarnet import *
 from continualUtils.models.cvt import *
 from continualUtils.models.deit import *
 from continualUtils.models.resnet import *
