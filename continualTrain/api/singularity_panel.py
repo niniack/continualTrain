@@ -1,12 +1,10 @@
 import os
 import subprocess
-from pathlib import Path
 
 import requests
 from rich import print
 
-from continualTrain.api.train import ContainerType, train
-from continualTrain.api.utils import check_path_exists
+from continualTrain.api.launch import ContainerTool, train
 
 
 def singularity_run_training(
@@ -15,7 +13,7 @@ def singularity_run_training(
     train(
         config,
         image_name,
-        ContainerType.singularity,
+        ContainerTool.singularity,
         run_interactive,
         run_profiler,
         run_debug,

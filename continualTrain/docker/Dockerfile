@@ -180,6 +180,6 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 # RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
 COPY ../continualUtils /app/continualUtils
-ENV PYTHONPATH "${PYTHONPATH}:/app"
+ENV PYTHONPATH "${PYTHONPATH}:/app:/workspace"
 
 # USER $USERNAME

@@ -1,4 +1,3 @@
-import argparse
 import importlib.util
 import os
 import sys
@@ -9,10 +8,13 @@ import GPUtil
 import pluggy
 import shortuuid
 import spec
+import tomlkit
 import torch
+import wandb
 from avalanche.benchmarks.utils.ffcv_support import enable_ffcv
 from avalanche.logging import InteractiveLogger, WandBLogger
 from avalanche.training.supervised.joint_training import JointTraining
+from parse_args import parse_args
 from utils import (
     DS_SEED,
     MODEL_SEEDS,
@@ -22,63 +24,22 @@ from utils import (
     verify_model_save_weights,
 )
 
+from continualTrain.api.utils import OPTIONAL_SWEEP_KEYS, read_toml_config
+
 """
 This script imports the given model file and executes training 
 in accordance with the configuration file 
 """
 
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Train a model.")
-
-    # Grabs arguments from API
-    parser.add_argument(
-        "hook_implementation",
-        type=str,
-        help="Path with your hook implementations to drive the training script.",
-    )
-    parser.add_argument(
-        "--save_path",
-        type=str,
-        required=True,
-        help="Path to save models",
-    )
-    parser.add_argument(
-        "--save_frequency",
-        type=int,
-        required=True,
-        help="Frequency to save models",
-    )
-    parser.add_argument(
-        "--use_wandb", action="store_true", help="Uses WandB logging"
-    )
-    parser.add_argument(
-        "--train_experiences",
-        type=int,
-        help="Number of experiences to train on",
-    )
-    parser.add_argument(
-        "--eval_experiences",
-        type=int,
-        help="Number of experiences to evaluate on",
-    )
-    parser.add_argument(
-        "--enable_ffcv", action="store_true", help="Use FFCV for dataloading"
-    )
-    parser.add_argument(
-        "--exclude_gpus",
-        nargs="*",
-        type=int,
-        help="The Device IDs of GPUs to exclude",
-    )
-    parser.add_argument(
-        "--profile", action="store_true", help="Profile the main training loop."
-    )
-    args = parser.parse_args()
-    return args
+# This is bad practice, but it must be done,
+# because of how WandB handles its WandB agents.
+pm, args = None, None
 
 
 def main():
+    global pm
+    global args
+
     # Pytorch settings
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
@@ -104,6 +65,50 @@ def main():
     # Register the loaded plugin with pluggy
     pm.register(plugin_module)
 
+    # If sweeping, offload execution to `wandb.agent`
+    if args.sweep_config_path:
+        # Override certain training arguments
+        args.use_wandb = True
+        args.save_frequency = 0
+        args.train_experiences = 2
+        args.eval_experiences = 2
+        args.enable_ffcv = False
+        args.profile = False
+
+        # Load sweep config
+        sweep_config = read_toml_config(
+            file_path=args.sweep_config_path, sweep=True
+        )
+        # with open(args.sweep_config_path, "r") as file:
+        #     sweep_config = tomlkit.load(file)
+
+        # Grab metadata for project name
+        metadata = pm.hook.get_metadata()
+
+        # Clean up WandB sweep schema violations
+        count = sweep_config["count"]
+        sweep_config.pop("count", None)
+        sweep_config.pop("program", None)
+
+        # Define a sweep ID
+        sweep_id = wandb.sweep(
+            sweep=sweep_config,
+            project=metadata["wandb_project_name"],
+            entity=metadata["wandb_entity"],
+        )
+
+        # Launch an agent that handles training launch
+        wandb.agent(
+            sweep_id=sweep_id,
+            function=train,
+            count=count,
+        )
+    else:
+        # Standard train
+        train()
+
+
+def train():
     # Generate a UUID for logging purposes
     rand_uuid = str(shortuuid.uuid())[:4]
 
@@ -176,7 +181,6 @@ def main():
     #         ffcv.transforms.ToTensor(),
     #     ],
     # }
-
     custom_decoder_pipeline = pm.hook.get_ffcv_decoder_pipeline()
 
     # Super sonic (in theory)
@@ -200,6 +204,7 @@ def main():
             print_summary=False,
         )
 
+    # Grab train and test streams from benchmark
     train_stream = (
         benchmark.train_stream[: int(args.train_experiences)]
         if hasattr(args, "train_experiences")
@@ -211,8 +216,8 @@ def main():
         else benchmark.test_stream
     )
 
-    # Defaults to none
-    val_stream = None
+    # Grab validation stream
+    val_stream = None  # Defaults to none
     if hasattr(benchmark, "val_stream"):
         val_stream = (
             benchmark.val_stream[: int(args.train_experiences)]
@@ -225,7 +230,7 @@ def main():
     # Collate function
     collate_fn = pm.hook.get_collate()
 
-    # PROFILER
+    # Load profiler
     if args.profile:
         # Initialize the profiler
         profiler = torch.profiler.profile(
@@ -255,13 +260,16 @@ def main():
         model = pm.hook.get_model(device=device, seed=model_seed)
 
         # Set up Avalanche strategy plugins
-        model_saver_plugin = ModelSaverPlugin(
-            save_frequency=args.save_frequency,
-            strategy_name=strategy_name,
-            rand_uuid=rand_uuid,
-            save_path=args.save_path,
-        )
-        plugins = [model_saver_plugin]
+        plugins = []
+
+        if args.save_frequency > 0:
+            model_saver_plugin = ModelSaverPlugin(
+                save_frequency=args.save_frequency,
+                strategy_name=strategy_name,
+                rand_uuid=rand_uuid,
+                save_path=args.save_path,
+            )
+            plugins.append(model_saver_plugin)
 
         # Criterion for training
         criterion = pm.hook.get_criterion()
@@ -284,7 +292,10 @@ def main():
             device=device,
         )
 
-        # Set up wandb logging, if requested
+        ########################################################################
+        ############################ WandB Setup ###############################
+
+        # Set up wandb logging
         if args.use_wandb:
             run_name = (
                 f"{rand_uuid}_seed{model_seed}_{strategy_name}_{dataset_name}"
@@ -293,9 +304,6 @@ def main():
 
             # Extract and log common hyperparameters
             wandb_config_dict = {
-                "init_lr": optimizer.param_groups[0]["lr"],
-                "minibatch_size": cl_strategy.train_mb_size,
-                "epochs": cl_strategy.train_epochs,
                 "model_seed": model_seed,
                 "gpu_ID": device,
                 "model_class": type(model).__name__,
@@ -306,18 +314,40 @@ def main():
                 ),
             }
 
+            # Add metadata to config dict
             wandb_config_dict.update(metadata)
 
-            for key, value in optimizer.defaults.items():
-                wandb_config_dict[f"optimizer_{key}"] = value
+            # for key, value in optimizer.defaults.items():
+            #     wandb_config_dict[f"optimizer_{key}"] = value
 
+            # Initialize WandB through Avalanche
             wandb_logger = WandBLogger(
                 project_name=wandb_project_name,
                 params=wandb_params,
                 config=wandb_config_dict,
             )
+            cl_strategy.evaluator.loggers.append(wandb_logger)
 
-            loggers.append(wandb_logger)
+            # If sweeping, sweep must hijack certain parameters before proceeding with training
+            if args.sweep_config_path:
+                hijackables = wandb.config.keys() - wandb_config_dict.keys()
+
+                # Sweep params are already in wandb.config
+                if "learning_rate" in hijackables:
+                    for param_group in optimizer.param_groups:
+                        param_group["lr"] = wandb.config["learning_rate"]
+                if "epochs" in hijackables:
+                    cl_strategy.train_epochs = wandb.config["epochs"]
+                if "batch_size" in hijackables:
+                    cl_strategy.train_mb_size = wandb.config["batch_size"]
+
+            # If not sweeping, update WandB config for logging
+            else:
+                wandb.config["learning_rate"] = optimizer.param_groups[0]["lr"]
+                wandb.config["batch_size"] = cl_strategy.train_mb_size
+                wandb.config["epochs"] = cl_strategy.train_epochs
+        ########################################################################
+        ########################################################################
 
         # Train and test loop
         results = []
@@ -389,7 +419,8 @@ def main():
                 model.save_weights(save_name)
 
         if args.use_wandb:
-            wandb_logger.wandb.finish()
+            wandb.teardown()
+            wandb.finish()
 
     if args.profile:
         profiler.stop()

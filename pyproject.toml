@@ -16,7 +16,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<3.11"
-toml = { version = "*"}
+tomlkit = { version = "*"}
 requests = { version = "*"}
 spython = { version = "*"}
 typer = {version = "*", extras = ["all"]}
@@ -44,7 +44,7 @@ pluggy = { version = "*"}
 shortuuid = { version = "*"}
 natsort = { version = "*"}
 protobuf = { version = "3.20.*"}
-avalanche-lib = { git = "https://github.com/ContinualAI/avalanche", rev = "12f37f8", allow-prereleases=true}
+avalanche-lib = { git = "https://github.com/ContinualAI/avalanche", rev = "baaf17d", allow-prereleases=true}
 transformers = "^4.35"
 torchattacks = { version = "*"}
 # continualUtils = { path = "./app/continualUtils/", develop = true }
