@@ -419,7 +419,6 @@ def train():
                 model.save_weights(save_name)
 
         if args.use_wandb:
-            wandb.teardown()
             wandb.finish()
 
     if args.profile:
