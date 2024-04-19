@@ -74,6 +74,7 @@ class CustomDeiTSmall(CustomDeiT):
         output_hidden: bool = False,
         make_multihead: bool = False,
         init_weights: bool = False,
+        image_size: int = 32,
     ):
         configuration = ViTConfig(
             num_labels=num_classes_per_task,
@@ -86,7 +87,7 @@ class CustomDeiTSmall(CustomDeiT):
             attention_probs_dropout_prob=0.0,
             initializer_range=0.02,
             layer_norm_eps=1e-12,
-            image_size=224,
+            image_size=image_size,
             patch_size=16,
             num_channel=3,
             qkv_bias=True,

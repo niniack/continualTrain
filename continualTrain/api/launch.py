@@ -118,7 +118,7 @@ def train(
             ):
                 docker_environment.extend(["-e", "CUDA_LAUNCH_BLOCKING=1"])
 
-                # Construct the full Docker command:
+            # Construct the full Docker command:
             mode = "-it" if (run_interactive or run_debug) else "-d"
             command = [
                 "docker",
