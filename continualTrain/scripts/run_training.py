@@ -317,9 +317,6 @@ def train():
             # Add metadata to config dict
             wandb_config_dict.update(metadata)
 
-            # for key, value in optimizer.defaults.items():
-            #     wandb_config_dict[f"optimizer_{key}"] = value
-
             # Initialize WandB through Avalanche
             wandb_logger = WandBLogger(
                 project_name=wandb_project_name,
@@ -333,6 +330,7 @@ def train():
                 hijackables = wandb.config.keys() - wandb_config_dict.keys()
 
                 # Sweep params are already in wandb.config
+                # Explicitly mentioning the common ones
                 if "learning_rate" in hijackables:
                     for param_group in optimizer.param_groups:
                         param_group["lr"] = wandb.config["learning_rate"]
@@ -341,11 +339,16 @@ def train():
                 if "batch_size" in hijackables:
                     cl_strategy.train_mb_size = wandb.config["batch_size"]
 
+                # Automating the less common ones
+                for hj in hijackables:
+                    setattr(cl_strategy, hj, wandb.config[hj])
+
             # If not sweeping, update WandB config for logging
             else:
                 wandb.config["learning_rate"] = optimizer.param_groups[0]["lr"]
                 wandb.config["batch_size"] = cl_strategy.train_mb_size
                 wandb.config["epochs"] = cl_strategy.train_epochs
+
         ########################################################################
         ########################################################################
 
