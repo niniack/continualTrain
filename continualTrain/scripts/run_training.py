@@ -362,7 +362,8 @@ def train():
                 experience=0,
                 epoch=cl_strategy.train_epochs,
             )
-            model.save_weights(save_name)
+            if args.save_frequency > 0:
+                model.save_weights(save_name)
         else:
             for exp_id, experience in enumerate(train_stream):
                 # Get val exp, if exists
@@ -416,7 +417,8 @@ def train():
                     experience=exp_id,
                     epoch=cl_strategy.train_epochs,
                 )
-                model.save_weights(save_name)
+                if args.save_frequency > 0:
+                    model.save_weights(save_name)
 
         if args.use_wandb:
             wandb.finish()
