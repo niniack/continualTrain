@@ -24,6 +24,7 @@ from utils import (
     verify_model_save_weights,
 )
 
+from continualTrain.api.sweep import SweepBase
 from continualTrain.api.utils import OPTIONAL_SWEEP_KEYS, read_toml_config
 
 """
@@ -341,7 +342,8 @@ def train():
 
                 # Automating the less common ones
                 for hj in hijackables:
-                    setattr(cl_strategy, hj, wandb.config[hj])
+                    if isinstance(cl_strategy, SweepBase):
+                        cl_strategy.set_plugin_attribute(hj, wandb.config[hj])
 
             # If not sweeping, update WandB config for logging
             else:
