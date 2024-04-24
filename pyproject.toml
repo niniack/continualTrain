@@ -44,7 +44,7 @@ pluggy = { version = "*"}
 shortuuid = { version = "*"}
 natsort = { version = "*"}
 protobuf = { version = "3.20.*"}
-avalanche-lib = { git = "https://github.com/ContinualAI/avalanche", rev = "baaf17d", allow-prereleases=true}
+avalanche-lib = { git = "https://github.com/ContinualAI/avalanche", rev = "6e5e3b2", allow-prereleases=true}
 transformers = "^4.35"
 torchattacks = { version = "*"}
 # continualUtils = { path = "./app/continualUtils/", develop = true }
