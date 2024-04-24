@@ -81,7 +81,7 @@ def initialize(
 
         config_dict["save_path"] = "./model_saves"
         config_dict["dataset_path"] = "/mnt/datasets"
-        config_dict["training_dir"] = "./training"
+        config_dict["training"] = "./training"
         config_dict["train_experiences"] = 1
         config_dict["eval_experiences"] = 1
         config_dict["wandb_api_key"] = "YOUR_WANDB_API_KEY"

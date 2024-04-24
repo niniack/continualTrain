@@ -9,7 +9,7 @@ import tomlkit
 REQUIRED_KEYS = [
     "save_path",
     "dataset_path",
-    "training_dir",
+    "training",
     "enable_wandb_logging",
     "wandb_api_key",
     "save_frequency",
@@ -138,9 +138,7 @@ def validate_configs(
 ) -> ContainerPaths:
     save_path = _path_exists(training_config["save_path"], "save_path")
     dataset_path = _path_exists(training_config["dataset_path"], "dataset_path")
-    train_dir_path = _path_exists(
-        training_config["training_dir"], "training_dir"
-    )
+    train_dir_path = _path_exists(training_config["training"], "training")
 
     hook_impl_files = []
     if sweep_config:

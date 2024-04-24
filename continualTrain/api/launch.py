@@ -40,9 +40,9 @@ def train(
     for impl in paths.hook_impl_files:
         # Start with the base command string:
         cmd_str = (
-            f"PYTHONPATH=$PYTHONPATH:/training_dir &&"
+            f"PYTHONPATH=$PYTHONPATH:/training &&"
             f"/app/.venv/bin/python /workspace/continualTrain/scripts/run_training.py "
-            f"/training_dir/{impl.relative_to(*impl.parts[:impl.parts.index('training')+1])}"
+            f"/training/{impl.relative_to(*impl.parts[:impl.parts.index('training')+1])}"
         )
 
         # Set the save path and frequency
@@ -103,7 +103,7 @@ def train(
                 "--mount",
                 f"type=bind,source={paths.sweep_config_path},target=/workspace/sweep.toml,readonly",
                 "--mount",
-                f"type=bind,source={paths.train_dir_path},target=/training_dir,readonly",
+                f"type=bind,source={paths.train_dir_path},target=/training,readonly",
                 "--mount",
                 f"type=bind,source={os.getenv('HOME')}/.ssh,target=/root/.ssh,readonly",
                 "--mount",
@@ -139,7 +139,7 @@ def train(
             bind_paths = (
                 f"{this_dir}:/workspace/continualTrain,"
                 f"{paths.sweep_config_path}:/workspace/sweep.toml,"
-                f"{paths.train_dir_path}:/training_dir,"
+                f"{paths.train_dir_path}:/training,"
                 f"{os.getenv('HOME')}/.ssh:/root/.ssh,"
                 f"{paths.save_path}:/save,"
                 f"{paths.dataset_path}:/datasets"
