@@ -109,7 +109,7 @@ def train(
                 "--mount",
                 f"type=bind,source={paths.save_path},target=/save",
                 "--mount",
-                f"type=bind,source={paths.dataset_path},target=/datasets,readonly",
+                f"type=bind,source={paths.dataset_path},target=/datasets",
             ]
 
             if (
