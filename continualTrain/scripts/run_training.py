@@ -140,7 +140,7 @@ def train():
             attempts=5,
             interval=5,
             verbose=False,
-            excludeID=[],
+            excludeID=args.exclude_gpus,
         )
     except RuntimeError as e:
         sys.exit(f"Error obtaining GPU: {e}")
