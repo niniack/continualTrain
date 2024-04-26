@@ -6,7 +6,7 @@ import torch
 from avalanche.core import SupervisedPlugin
 
 DS_SEED = 79
-MODEL_SEEDS = [0]
+MODEL_SEEDS = [0,1,2]
 
 
 def seed_everything(seed):

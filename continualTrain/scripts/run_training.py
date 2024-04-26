@@ -44,7 +44,7 @@ def main():
     # Pytorch settings
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
-    seed_everything(seed=12345)
+
 
     # Args from the CLI interface
     args = parse_args()
@@ -249,13 +249,22 @@ def train():
         # Start the profiler
         profiler.start()
 
+    # Don't run multiple seeds, just pick the first for a sweep
+    global MODEL_SEEDS
+    if args.sweep_config_path:
+        MODEL_SEEDS = MODEL_SEEDS[:1]
+
     # TRAINING
     for model_seed in MODEL_SEEDS:
+        # Seed everything
+        seed_everything(seed=model_seed)
+
         # Set up interactive logging
         loggers = [interactive_logger]
 
         # Set up evaluator, which accepts loggers
         eval_plugin = pm.hook.get_evaluator(loggers=loggers)
+
 
         # Model from plugin manager
         model = pm.hook.get_model(device=device, seed=model_seed)
@@ -343,7 +352,11 @@ def train():
                 # Automating the less common ones
                 for hj in hijackables:
                     if isinstance(cl_strategy, SweepBase):
-                        cl_strategy.set_plugin_attribute(hj, wandb.config[hj])
+                        if hj == "si_lambda":
+                             param = [wandb.config[hj]]
+                        else:
+                            param = wandb.config[hj]
+                        cl_strategy.set_plugin_attribute(hj, param)
 
             # If not sweeping, update WandB config for logging
             else:
