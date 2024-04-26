@@ -109,7 +109,7 @@ class BaseModel(ABC, torch.nn.Module):
         # Call model specific implementation
         self._save_weights_impl(dir_name)
 
-    def load_weights(self, parent_dir: str, device) -> None:
+    def load_weights(self, parent_dir: str, device, verbose: bool = False) -> None:
         """Load model weights.
 
         :param parent_dir: Directory to find the model weights
@@ -118,14 +118,14 @@ class BaseModel(ABC, torch.nn.Module):
         dir_name = self._get_dir_name(parent_dir)
 
         # Call model specific implementation
-        self._load_weights_impl(dir_name, device)
+        self._load_weights_impl(dir_name, device, verbose)
 
     @abstractmethod
     def _save_weights_impl(self, dir_name: str) -> None:
         pass
 
     @abstractmethod
-    def _load_weights_impl(self, dir_name: str, device) -> None:
+    def _load_weights_impl(self, dir_name: str, device, verbose: bool) -> None:
         pass
 
     @abstractmethod
@@ -165,8 +165,9 @@ class FrameworkModel(BaseModel):
 
         print(f"\nModel saved in directory: {dir_name}")
 
-    def _load_weights_impl(self, dir_name, device) -> None:
-        print(f"Loading model from {dir_name}")
+    def _load_weights_impl(self, dir_name, device, verbose=False) -> None:
+        if verbose:
+            print(f"Loading model from {dir_name}")
 
         # Path for the safetensors file
         safetensors_file = os.path.join(dir_name, "model.safetensors")
@@ -196,11 +197,12 @@ class FrameworkModel(BaseModel):
                 self._model, safetensors_file, strict=False
             )
             self._model.to(device)
-            print(
-                f"""Entire model loaded from {safetensors_file},
-                missing {missing} and unexpected {unexpected}
-                """
-            )
+            if verbose:
+                print(
+                    f"""Entire model loaded from {safetensors_file},
+                    missing {missing} and unexpected {unexpected}
+                    """
+                )
         except:
             raise ValueError("Failed to load the model")
 
