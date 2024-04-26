@@ -119,11 +119,11 @@ def train(
                 docker_environment.extend(["-e", "CUDA_LAUNCH_BLOCKING=1"])
 
             # Construct the full Docker command:
-            mode = "-it" if (run_interactive or run_debug) else "-d"
+            mode = "-it" if (run_interactive or run_debug) else None
             command = [
                 "docker",
                 "run",
-                mode,
+                *(mode.split() if mode else []),
                 "--rm",
                 *docker_environment,
                 image_name,
@@ -186,12 +186,7 @@ def train(
             ]
 
         # Run command async and append to keep track of it
-        process = subprocess.Popen(command)
-        processes.append(process)
-
-    # Wait for all processes to complete
-    for process in processes:
-        process.wait()
+        process = subprocess.run(command, check=True)
 
 
 __all__ = ["train"]
