@@ -1,8 +1,42 @@
+# Compiled Python files
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Package/distribution files
 *.egg-info
-test_inputs
-wandb
-.vscode
-__pycache__
-*.env
-parse_config.py
-*.def
+dist/
+build/
+
+# Test data
+test_inputs/
+test_results/  # Consider if you store test results
+*.log         # Consider if your tests generate log files
+
+# Configuration (if sensitive, use a template instead)
+config.py  
+*.ini
+*.cfg
+*.yaml
+*.yml
+.devcontainer
+
+# IDE/Editor settings
+.vscode/
+.idea/
+.DS_Store
+
+# Weight & Biases logs
+wandb/
+
+# Miscellaneous
+*.def # Consider if these files should be versioned
+*.lock
+
+# Sensitive files (use a template like 'config.template.py' instead)
+credentials.json
+api_key.txt
