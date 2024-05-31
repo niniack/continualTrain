@@ -4,7 +4,7 @@ import subprocess
 import requests
 from rich import print
 
-from continualTrain.api.launch import ContainerTool, train
+from continualTrain.continualTrain.api.launch import ContainerTool, train
 
 
 def singularity_run_training(

@@ -5,16 +5,16 @@ import typer
 from rich import print
 from typing_extensions import Annotated
 
-from continualTrain.api.docker_panel import (
+from continualTrain.continualTrain.api.docker_panel import (
     docker_build_image,
     docker_run_sweep,
     docker_run_training,
 )
-from continualTrain.api.singularity_panel import (
+from continualTrain.continualTrain.api.singularity_panel import (
     singularity_pull_image,
     singularity_run_training,
 )
-from continualTrain.api.utils import (
+from continualTrain.continualTrain.api.utils import (
     OPTIONAL_KEYS,
     OPTIONAL_SWEEP_KEYS,
     REQUIRED_KEYS,

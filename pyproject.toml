@@ -64,7 +64,7 @@ torchviz = "^0.0.2"
 ipykernel = "^6.26.0"
 
 [tool.poetry.scripts]
-barracks = "continualTrain.api.entry:app"
+barracks = "continualTrain.continualTrain.api.entry:app"
 devtest = "tests.run_tests:main"
 
 [[tool.poetry.source]]

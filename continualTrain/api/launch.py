@@ -5,7 +5,10 @@ from typing import Optional
 
 import tomlkit
 
-from continualTrain.api.utils import ContainerPaths, ContainerTool
+from continualTrain.continualTrain.api.utils import (
+    ContainerPaths,
+    ContainerTool,
+)
 
 """
 This is a `launch` wrapper around `scripts/run_training.py`. 
@@ -187,6 +190,9 @@ def train(
 
         # Run command async and append to keep track of it
         process = subprocess.run(command, check=True)
+
+
+__all__ = ["train"]
 
 
 __all__ = ["train"]

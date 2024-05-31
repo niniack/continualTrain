@@ -24,8 +24,11 @@ from utils import (
     verify_model_save_weights,
 )
 
-from continualTrain.api.sweep import SweepBase
-from continualTrain.api.utils import OPTIONAL_SWEEP_KEYS, read_toml_config
+from continualTrain.continualTrain.api.sweep import SweepBase
+from continualTrain.continualTrain.api.utils import (
+    OPTIONAL_SWEEP_KEYS,
+    read_toml_config,
+)
 
 """
 This script imports the given model file and executes training 
@@ -44,7 +47,6 @@ def main():
     # Pytorch settings
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
-
 
     # Args from the CLI interface
     args = parse_args()
@@ -265,7 +267,6 @@ def train():
         # Set up evaluator, which accepts loggers
         eval_plugin = pm.hook.get_evaluator(loggers=loggers)
 
-
         # Model from plugin manager
         model = pm.hook.get_model(device=device, seed=model_seed)
 
@@ -353,7 +354,7 @@ def train():
                 for hj in hijackables:
                     if isinstance(cl_strategy, SweepBase):
                         if hj == "si_lambda":
-                             param = [wandb.config[hj]]
+                            param = [wandb.config[hj]]
                         else:
                             param = wandb.config[hj]
                         cl_strategy.set_plugin_attribute(hj, param)
@@ -444,6 +445,9 @@ def train():
     if args.profile:
         profiler.stop()
 
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main()

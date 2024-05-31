@@ -1,8 +1,8 @@
 import subprocess
 from pathlib import Path
 
-from continualTrain.api.launch import ContainerTool, train
-from continualTrain.api.utils import validate_configs
+from continualTrain.continualTrain.api.launch import ContainerTool, train
+from continualTrain.continualTrain.api.utils import validate_configs
 
 
 def docker_run_sweep(
